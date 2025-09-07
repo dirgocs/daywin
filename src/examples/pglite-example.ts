@@ -5,8 +5,6 @@
 
 import { PGlite } from '@electric-sql/pglite';
 import { PrismaClient } from '@prisma/client';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 /**
  * Exemplo de configuração e uso do PGlite com Prisma

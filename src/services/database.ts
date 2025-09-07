@@ -1,5 +1,3 @@
-import { PGlite } from '@electric-sql/pglite';
-import { PrismaPGlite } from 'pglite-prisma-adapter';
 import { PrismaClient } from '@prisma/client';
 import { app } from 'electron';
 import path from 'path';
@@ -12,7 +10,6 @@ import fs from 'fs/promises';
 class DatabaseService {
   private static instance: DatabaseService;
   private prisma: PrismaClient | null = null;
-  private pglite: PGlite | null = null;
   private isInitialized = false;
 
   private constructor() {}
@@ -25,7 +22,7 @@ class DatabaseService {
   }
 
   /**
-   * Inicializa o banco de dados PGlite com Prisma
+   * Inicializa o banco de dados com Prisma
    */
   async initialize(): Promise<PrismaClient> {
     if (this.isInitialized && this.prisma) {
@@ -35,26 +32,8 @@ class DatabaseService {
     try {
       console.log('🔄 Initializing Daywin database...');
       
-      // Caminho para o banco de dados no userData do Electron
-      const userDataPath = app.getPath('userData');
-      const dbPath = path.join(userDataPath, 'daywin.pglite');
-      
-      // Garantir que o diretório existe
-      await this.ensureDirectoryExists(path.dirname(dbPath));
-      
-      console.log(`📁 Database path: ${dbPath}`);
-      
-      // Inicializar PGlite com configurações otimizadas
-      this.pglite = new PGlite({
-        dataDir: dbPath
-      });
-
-      // Criar adapter Prisma
-      const adapter = new PrismaPGlite(this.pglite);
-
       // Inicializar Prisma Client
-      this.prisma = new PrismaClient({ 
-        adapter,
+      this.prisma = new PrismaClient({
         log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error']
       });
 
@@ -117,7 +96,7 @@ class DatabaseService {
         AND table_name IN ('User', 'Task', 'Habit', 'HabitEntry');
       `;
 
-      const existingTables = tables.map(t => t.table_name);
+      const existingTables = tables.map((t: { table_name: string }) => t.table_name);
       console.log('📋 Existing tables:', existingTables);
 
       // Se não há tabelas principais, criar schema básico
@@ -252,9 +231,9 @@ class DatabaseService {
         version: '1.0.0',
         data: {
           users: await this.prisma.user.findMany(),
-          tasks: await this.prisma.task.findMany(),
-          habits: await this.prisma.habit.findMany(),
-          habitEntries: await this.prisma.habitEntry.findMany()
+          diaristas: await this.prisma.diarista.findMany(),
+          funcoes: await this.prisma.funcao.findMany(),
+          diasTrabalhados: await this.prisma.diaTrabalhado.findMany()
         }
       };
       
@@ -290,10 +269,7 @@ class DatabaseService {
         this.prisma = null;
       }
       
-      if (this.pglite) {
-        await this.pglite.close();
-        this.pglite = null;
-      }
+
       
       this.isInitialized = false;
       console.log('✅ Database disconnected successfully');
@@ -311,10 +287,7 @@ class DatabaseService {
         await this.prisma.$disconnect();
         this.prisma = null;
       }
-      if (this.pglite) {
-        await this.pglite.close();
-        this.pglite = null;
-      }
+
       this.isInitialized = false;
     } catch (error) {
       console.error('Cleanup error:', error);
@@ -337,18 +310,18 @@ class DatabaseService {
    */
   async getStats(): Promise<{
     users: number;
-    tasks: number;
-    habits: number;
-    habitEntries: number;
+    diaristas: number;
+    funcoes: number;
+    diasTrabalhados: number;
     dbSize: string;
   }> {
     if (!this.prisma) throw new Error('Database not initialized');
     
-    const [users, tasks, habits, habitEntries] = await Promise.all([
+    const [users, diaristas, funcoes, diasTrabalhados] = await Promise.all([
       this.prisma.user.count(),
-      this.prisma.task.count(),
-      this.prisma.habit.count(),
-      this.prisma.habitEntry.count()
+      this.prisma.diarista.count(),
+      this.prisma.funcao.count(),
+      this.prisma.diaTrabalhado.count()
     ]);
     
     // Calcular tamanho aproximado do banco
@@ -364,9 +337,9 @@ class DatabaseService {
     
     return {
       users,
-      tasks,
-      habits,
-      habitEntries,
+      diaristas,
+      funcoes,
+      diasTrabalhados,
       dbSize
     };
   }

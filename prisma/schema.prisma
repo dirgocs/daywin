@@ -1,8 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Daywin - Schema Prisma v0.5
+// Sistema de gestão de diaristas com fechamento e RBAC
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -10,43 +11,237 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
+// ===== MODELOS PRINCIPAIS =====
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Funcao {
+  funcao_id    Int      @id @default(autoincrement())
+  funcao_nome  String
+  peso_pontos  Decimal  @default("1.00") @db.Decimal(6,2)
+  ativo        Boolean  @default(true)
   
   // Relacionamentos
-  tasks     Task[]
+  diaristas       Diarista[]
+  dias_trabalhados DiaTrabalhado[]
+  
+  @@map("funcoes")
+}
+
+model Diarista {
+  diarista_id   Int     @id @default(autoincrement())
+  nome_completo String
+  apelido       String?
+  telefone      String?
+  email         String?
+  funcao_id     Int?
+  pix_tipo      String?
+  pix_chave     String?
+  ativo         Boolean @default(true)
+  
+  // Relacionamentos
+  funcao           Funcao?         @relation(fields: [funcao_id], references: [funcao_id])
+  dias_trabalhados DiaTrabalhado[]
+  bonificacoes     Bonificacao[]
+  descontos        Desconto[]
+  fechamentos      Fechamento[]
+  
+  @@map("diaristas")
+}
+
+model DiaTrabalhado {
+  lanc_id           BigInt   @id @default(autoincrement())
+  data              DateTime @db.Date
+  diarista_id       Int
+  funcao_id         Int?
+  horas_trabalhadas Decimal  @default("8.00") @db.Decimal(6,2)
+  diaria_valor      Decimal  @default("0.00") @db.Decimal(12,2)
+  observacoes       String?
+  
+  // Relacionamentos
+  diarista Diarista @relation(fields: [diarista_id], references: [diarista_id])
+  funcao   Funcao?  @relation(fields: [funcao_id], references: [funcao_id])
+  
+  @@map("dias_trabalhados")
+  @@index([data])
+  @@index([diarista_id])
+}
+
+model TaxaServico {
+  taxa_id         BigInt   @id @default(autoincrement())
+  data            DateTime @db.Date
+  referencia      String?
+  valor_arrecadado Decimal @db.Decimal(12,2)
+  observacoes     String?
+  
+  @@map("taxa_servico")
+  @@index([data])
+}
+
+model Bonificacao {
+  bonus_id    BigInt   @id @default(autoincrement())
+  data        DateTime @db.Date
+  diarista_id Int
+  valor       Decimal  @db.Decimal(12,2)
+  motivo      String?
+  
+  // Relacionamentos
+  diarista Diarista @relation(fields: [diarista_id], references: [diarista_id])
+  
+  @@map("bonificacoes")
+  @@index([data])
+  @@index([diarista_id])
+}
+
+model Desconto {
+  desc_id     BigInt   @id @default(autoincrement())
+  data        DateTime @db.Date
+  diarista_id Int
+  valor       Decimal  @db.Decimal(12,2)
+  motivo      String?
+  
+  // Relacionamentos
+  diarista Diarista @relation(fields: [diarista_id], references: [diarista_id])
+  
+  @@map("descontos")
+  @@index([data])
+  @@index([diarista_id])
+}
+
+// ===== CONFIGURAÇÕES E REGRAS =====
+
+model RegrasTaxaServico {
+  regra_id                     Int     @id @default(autoincrement())
+  modo                         String  @default("pontos_funcao") // 'pontos_funcao' | 'horas' | 'fixo_percentual'
+  percentual_para_diaristas    Decimal @default("100.00") @db.Decimal(5,2)
+  min_horas_para_eligibilidade Decimal @default("4.00") @db.Decimal(6,2)
+  arredondamento_cinquentavos  Boolean @default(false)
+  
+  @@map("regras_taxa_servico")
+}
+
+// ===== PERÍODOS E FECHAMENTOS =====
+
+model Periodo {
+  periodo_id   Int       @id @default(autoincrement())
+  inicio       DateTime  @db.Date
+  fim          DateTime  @db.Date
+  status       String    @default("aberto") // 'aberto' | 'fechado'
+  fechado_em   DateTime?
+  fechado_por  String?
+  observacoes  String?
+  freq_tipo    String    // 'diario' | 'semanal' | 'quinzenal' | 'mensal' | 'custom'
+  freq_ancora  Json?
+  freq_opcao   String?
+  
+  // Relacionamentos
+  fechamentos Fechamento[]
+  
+  @@map("periodos")
+}
+
+model Fechamento {
+  fechamento_id  BigInt  @id @default(autoincrement())
+  periodo_id     Int
+  diarista_id    Int
+  horas_total    Decimal @default("0") @db.Decimal(6,2)
+  pontos         Decimal @default("0") @db.Decimal(8,2)
+  diarias_total  Decimal @default("0") @db.Decimal(12,2)
+  bonus_total    Decimal @default("0") @db.Decimal(12,2)
+  descontos_total Decimal @default("0") @db.Decimal(12,2)
+  cota_taxa      Decimal @default("0") @db.Decimal(12,2)
+  total_pagar    Decimal @default("0") @db.Decimal(12,2)
+  
+  // Relacionamentos
+  periodo  Periodo  @relation(fields: [periodo_id], references: [periodo_id])
+  diarista Diarista @relation(fields: [diarista_id], references: [diarista_id])
+  
+  @@unique([periodo_id, diarista_id])
+  @@map("fechamentos")
+}
+
+// ===== RBAC (Roles-Based Access Control) =====
+
+model User {
+  user_id      Int      @id @default(autoincrement())
+  name         String
+  email        String?
+  login        String   @unique
+  password_hash String
+  active       Boolean  @default(true)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  
+  // Relacionamentos
+  user_roles UserRole[]
   
   @@map("users")
 }
 
-model Task {
-  id          String    @id @default(cuid())
-  title       String
+model Role {
+  role_id     Int    @id @default(autoincrement())
+  role_name   String @unique
   description String?
-  completed   Boolean   @default(false)
-  priority    Priority  @default(MEDIUM)
-  dueDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
   
   // Relacionamentos
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role_permissions RolePermission[]
+  user_roles       UserRole[]
   
-  @@map("tasks")
-  @@index([userId])
-  @@index([completed])
-  @@index([priority])
-  @@index([dueDate])
+  @@map("roles")
+}
+
+model Permission {
+  perm_key    String @id
+  description String?
+  
+  // Relacionamentos
+  role_permissions RolePermission[]
+  
+  @@map("permissions")
+}
+
+model RolePermission {
+  role_id  Int
+  perm_key String
+  
+  // Relacionamentos
+  role       Role       @relation(fields: [role_id], references: [role_id], onDelete: Cascade)
+  permission Permission @relation(fields: [perm_key], references: [perm_key], onDelete: Cascade)
+  
+  @@id([role_id, perm_key])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  user_id Int
+  role_id Int
+  
+  // Relacionamentos
+  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  role Role @relation(fields: [role_id], references: [role_id], onDelete: Cascade)
+  
+  @@id([user_id, role_id])
+  @@map("user_roles")
+}
+
+// ===== AUDITORIA E CONFIGURAÇÕES =====
+
+model Auditoria {
+  audit_id    BigInt   @id @default(autoincrement())
+  ts          DateTime @default(now())
+  usuario     String?
+  acao        String
+  entidade    String
+  entidade_id String?
+  detalhes    Json?
+  
+  @@map("auditoria")
+  @@index([ts])
+  @@index([usuario])
+  @@index([entidade])
+}
+
+model Settings {
+  key   String @id
+  value String
+  
+  @@map("settings")
 }

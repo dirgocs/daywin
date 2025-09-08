@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Login from './Login';
 import AppLayout from './AppLayout';
+import CustomTitleBar from './CustomTitleBar';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -92,86 +93,88 @@ const App = () => {
   }
 
   return (
-    <div className="App relative">
-      {sessionWarning && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="text-amber-600">Sessão Expirando</CardTitle>
-              <CardDescription>
-                Sua sessão expirará em 5 segundos por inatividade.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                <Button onClick={extendSession} className="flex-1">
-                  Continuar Sessão
-                </Button>
-                <Button onClick={handleLogout} variant="outline" className="flex-1">
-                  Sair
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      
-      {user ? (
-        <AppLayout user={user} onLogout={handleLogout}>
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-              <p className="text-muted-foreground">
-                Bem-vindo ao sistema de gestão de diaristas Daywin
-              </p>
-            </div>
-            
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <h3 className="tracking-tight text-sm font-medium">Total de Diaristas</h3>
+    <div className="App">
+        <CustomTitleBar />
+        
+        {sessionWarning && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="text-amber-600">Sessão Expirando</CardTitle>
+                <CardDescription>
+                  Sua sessão expirará em 5 segundos por inatividade.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
+                  <Button onClick={extendSession} className="flex-1">
+                    Continuar Sessão
+                  </Button>
+                  <Button onClick={handleLogout} variant="outline" className="flex-1">
+                    Sair
+                  </Button>
                 </div>
-                <div className="text-2xl font-bold">0</div>
-                <p className="text-xs text-muted-foreground">
-                  Nenhuma diarista cadastrada
-                </p>
-              </div>
-              
-              <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <h3 className="tracking-tight text-sm font-medium">Dias Trabalhados</h3>
-                </div>
-                <div className="text-2xl font-bold">0</div>
-                <p className="text-xs text-muted-foreground">
-                  Este mês
-                </p>
-              </div>
-              
-              <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <h3 className="tracking-tight text-sm font-medium">Receita Total</h3>
-                </div>
-                <div className="text-2xl font-bold">R$ 0,00</div>
-                <p className="text-xs text-muted-foreground">
-                  Este mês
-                </p>
-              </div>
-              
-              <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <h3 className="tracking-tight text-sm font-medium">Pendências</h3>
-                </div>
-                <div className="text-2xl font-bold">0</div>
-                <p className="text-xs text-muted-foreground">
-                  Nenhuma pendência
-                </p>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
-        </AppLayout>
-      ) : (
-        <Login onLogin={handleLogin} />
-      )}
+        )}
+        
+        {user ? (
+          <AppLayout user={user} onLogout={handleLogout}>
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                <p className="text-muted-foreground">
+                  Bem-vindo ao sistema de gestão de diaristas Daywin
+                </p>
+              </div>
+              
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <h3 className="tracking-tight text-sm font-medium">Total de Diaristas</h3>
+                  </div>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">
+                    Nenhuma diarista cadastrada
+                  </p>
+                </div>
+                
+                <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <h3 className="tracking-tight text-sm font-medium">Dias Trabalhados</h3>
+                  </div>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">
+                    Este mês
+                  </p>
+                </div>
+                
+                <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <h3 className="tracking-tight text-sm font-medium">Receita Total</h3>
+                  </div>
+                  <div className="text-2xl font-bold">R$ 0,00</div>
+                  <p className="text-xs text-muted-foreground">
+                    Este mês
+                  </p>
+                </div>
+                
+                <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <h3 className="tracking-tight text-sm font-medium">Pendências</h3>
+                  </div>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">
+                    Nenhuma pendência
+                  </p>
+                </div>
+              </div>
+            </div>
+          </AppLayout>
+        ) : (
+          <Login onLogin={handleLogin} />
+        )}
     </div>
   );
 };

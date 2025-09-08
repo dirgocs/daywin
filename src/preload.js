@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Session APIs
   session: {
     extend: () => ipcRenderer.invoke('session:extend'),
+    pingActivity: () => ipcRenderer.invoke('session:extend'), // Alias for extend - pings activity
     onTimeout: (callback) => ipcRenderer.on('session:timeout', callback),
     removeTimeoutListener: (callback) => ipcRenderer.removeListener('session:timeout', callback)
   },
@@ -142,7 +143,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     minimize: () => ipcRenderer.invoke('window:minimize'),
     maximize: () => ipcRenderer.invoke('window:maximize'),
     close: () => ipcRenderer.invoke('window:close')
-  }
+  },
+
+  // Title bar and platform APIs
+  getPlatform: () => ipcRenderer.invoke('window:getPlatform'),
+  isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+  updateTitleBarTheme: (colors) => ipcRenderer.invoke('titlebar:updateTheme', colors),
+  
+  // Window state change listeners
+  onWindowStateChanged: (callback) => ipcRenderer.on('window:state-changed', (event, state) => callback(state)),
+  removeWindowStateListener: (callback) => ipcRenderer.removeListener('window:state-changed', callback),
+  
+  // Convenience methods for title bar component
+  minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
+  maximizeWindow: () => ipcRenderer.invoke('window:maximize'),
+  unmaximizeWindow: () => ipcRenderer.invoke('window:maximize'), // Same handler toggles
+  closeWindow: () => ipcRenderer.invoke('window:close')
 });
 
 // Expose version info

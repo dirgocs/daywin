@@ -1,50 +1,110 @@
 @import "tailwindcss";
 
-/* Ensure full width for all containers */
-html {
-  width: 100%;
-  min-width: 100vw;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-#root {
-  width: 100%;
-  min-width: 100vw;
-  margin: 0;
-  padding: 0;
-}
-
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
 
-
 body {
   margin: 0;
-  padding: 0;
-  width: 100vw;
-  min-width: 100vw;
-  overflow-x: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  box-sizing: border-box;
 }
 
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom Title Bar Styles - Notion-style */
+.custom-titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: var(--sidebar);
+  color: var(--sidebar-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.drag-region {
+  flex: 1;
+  height: 100%;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.window-controls {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.control-button {
+  width: 46px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--sidebar-foreground);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.control-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.control-button.close:hover {
+  background: #e81123;
+  color: white;
+}
+
+.control-button svg {
+  opacity: 0.8;
+}
+
+.control-button:hover svg {
+  opacity: 1;
+}
+
+/* Prevent text selection in titlebar */
+.custom-titlebar {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Adjust app content to account for custom title bar */
 .App {
-  width: 100vw;
-  min-height: 100vh;
-  position: relative;
+  padding-top: 32px;
+}
+
+/* Make sure sidebar and main content respect title bar */
+[data-sidebar="sidebar"] {
+  top: 32px !important;
+  height: calc(100vh - 32px) !important;
+}
+
+/* Add padding to sidebar header to avoid overlap with custom title bar */
+[data-sidebar="sidebar"] [data-slot="sidebar-header"] {
+  padding-top: 36px !important; /* 32px title bar + 4px spacing */
+}
+
+/* Adjust sidebar inset content */
+.sidebar-inset {
+  margin-top: 32px;
 }
 
 @theme inline {

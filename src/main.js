@@ -70,21 +70,14 @@ if (started) {
 }
 
 const createWindow = () => {
-  // Create the browser window.
+  // Create the browser window
   const mainWindow = new BrowserWindow({
       width: 1200,
       height: 800,
-      title: '',
-      titleBarStyle: 'hiddenInset',
-      autoHideMenuBar: true,
-      resizable: true,
-      
-      titleBarOverlay: {
-        color: '#1f1f23',
-        symbolColor: '#ffffff',
-        height: 32
-      },
+      title: '', // Remove window title text
       icon: null,
+      frame: false, // Remove window frame completely
+      backgroundColor: '#393940', // Matches sidebar background in dark theme
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true,
@@ -93,8 +86,8 @@ const createWindow = () => {
       }
     });
 
-  // Remove menu bar
-  mainWindow.setMenuBarVisibility(true);
+  // Show native title bar with menu bar hidden
+  mainWindow.setMenuBarVisibility(false);
 
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -105,6 +98,15 @@ const createWindow = () => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+  
+  // Listen for window state changes and notify renderer
+  mainWindow.on('maximize', () => {
+    mainWindow.webContents.send('window:state-changed', { isMaximized: true });
+  });
+  
+  mainWindow.on('unmaximize', () => {
+    mainWindow.webContents.send('window:state-changed', { isMaximized: false });
+  });
 };
 
 // This method will be called when Electron has finished
@@ -345,31 +347,34 @@ ipcMain.handle('session:extend', async (event) => {
   return { success: true };
 });
 
-// Window control handlers
+// Window Controls IPC Handlers (for custom title bar)
 ipcMain.handle('window:minimize', async (event) => {
   const mainWindow = BrowserWindow.fromWebContents(event.sender);
-  if (mainWindow) {
-    mainWindow.minimize();
-  }
+  mainWindow.minimize();
+  return { success: true };
 });
 
 ipcMain.handle('window:maximize', async (event) => {
   const mainWindow = BrowserWindow.fromWebContents(event.sender);
-  if (mainWindow) {
-    if (mainWindow.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow.maximize();
-    }
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow.maximize();
   }
+  return { success: true, isMaximized: mainWindow.isMaximized() };
 });
 
 ipcMain.handle('window:close', async (event) => {
   const mainWindow = BrowserWindow.fromWebContents(event.sender);
-  if (mainWindow) {
-    mainWindow.close();
-  }
+  mainWindow.close();
+  return { success: true };
 });
+
+ipcMain.handle('window:isMaximized', async (event) => {
+  const mainWindow = BrowserWindow.fromWebContents(event.sender);
+  return mainWindow.isMaximized();
+});
+
 
 // TODO: Add other IPC handlers for the application features
 

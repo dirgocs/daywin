@@ -175,11 +175,18 @@ Implemente **migrations** Prisma com os modelos abaixo (nomes/colunas fiéis; ti
 ## UX (mapa)
 - **Dashboard** (período atual): cards (Diárias, Bônus, Descontos, Taxa), Top 5 horas.  
 - **Diaristas / Funções** (lista + formulário/edição inline).  
-- **Lançamentos**: Dias, Bônus, Descontos, Taxa (grids + “Novo”).  
+- **Lançamentos**: Dias, Bônus, Descontos, Taxa (grids + "Novo").  
 - **Fechamento**: selecionar/criar período → **Prévia** → **Confirmar & Travar** → exportar CSV/XLSX + **Espelhos**.  
 - **Configurações**: frequência + âncoras, regras, arredondamento, **Usuários & Papéis**, **Backup/Restore**, **Política de sessão** (somente leitura).
 
 **shadcn/ui** sugeridos: `Card`, `Table`, `Dialog`, `Form`, `Input`, `Select`, `DatePicker`, `Tabs`, `Toast`, `DropdownMenu`, `Badge`, `Switch`, `Alert`, `Separator`, `Sheet`.
+
+## Design de Interface
+
+### Window Frame e Title Bar
+O design da interface segue especificação detalhada para integração completa do title bar com o layout do aplicativo. Para detalhes completos, consultar: **[Daywin Integrated Title Bar Design Specification](./design/daywin_integrated_title_bar_design.md)**
+
+**Resumo**: Title bar completamente integrado ao sidebar, sem bordas ou elementos visuais separadores, mantendo apenas controles de janela essenciais (minimizar, maximizar, fechar) e funcionalidade de arrastar.
 
 ---
 

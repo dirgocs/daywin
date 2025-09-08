@@ -11,6 +11,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
+
 const AppLayout = ({ children, user, onLogout }) => {
   return (
     <SidebarProvider>

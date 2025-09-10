@@ -97,6 +97,11 @@ code {
   height: calc(100vh - 32px) !important;
 }
 
+/* Ensure sidebar inner content fills available height */
+[data-sidebar="sidebar"] [data-slot="sidebar-inner"] {
+  height: 100% !important;
+}
+
 /* Add padding to sidebar header to avoid overlap with custom title bar */
 [data-sidebar="sidebar"] [data-slot="sidebar-header"] {
   padding-top: 36px !important; /* 32px title bar + 4px spacing */

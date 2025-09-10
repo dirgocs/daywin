@@ -98,9 +98,9 @@ code {
 }
 
 /* Ensure sidebar inner content fills available height */
-[data-sidebar="sidebar"] [data-slot="sidebar-inner"] {
+/* [data-sidebar="sidebar"] [data-slot="sidebar-inner"] {
   height: 100% !important;
-}
+} */
 
 /* Add padding to sidebar header to avoid overlap with custom title bar */
 [data-sidebar="sidebar"] [data-slot="sidebar-header"] {
@@ -110,6 +110,25 @@ code {
 /* Adjust sidebar inset content */
 .sidebar-inset {
   margin-top: 32px;
+}
+
+
+/* Clean solution: Fix sidebar footer positioning without breaking the design system */
+[data-slot="sidebar-inner"] {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+[data-slot="sidebar-content"] {
+  flex: 1 !important;
+  overflow-y: auto !important;
+}
+
+[data-slot="sidebar-footer"] {
+  position: sticky !important;
+  bottom: 0 !important;
+  margin-top: auto !important;
 }
 
 @theme inline {

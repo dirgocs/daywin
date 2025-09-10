@@ -10,6 +10,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarMenu,
@@ -122,7 +123,9 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+import { Button } from "@/components/ui/button"
+
+export function AppSidebar({ user, onLogout, ...props }: React.ComponentProps<typeof Sidebar> & { user?: any; onLogout?: () => void }) {
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -182,6 +185,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
+      
+      {/* User info and logout in footer */}
+      <SidebarFooter>
+        <div className="flex items-center gap-2 p-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white text-sm font-medium">
+            {user?.name?.charAt(0) || 'U'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-medium truncate">{user?.name || 'Usuário'}</span>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onLogout}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 px-2 text-xs"
+          >
+            Sair
+          </Button>
+        </div>
+      </SidebarFooter>
+      
       <SidebarRail />
     </Sidebar>
   )

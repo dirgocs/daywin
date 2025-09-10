@@ -1,6 +1,7 @@
 import React from 'react';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
+import TestSidebar from '@/components/TestSidebar';
 import { Separator } from '@/components/ui/separator';
 import {
   Breadcrumb,
@@ -15,7 +16,7 @@ import { Button } from '@/components/ui/button';
 const AppLayout = ({ children, user, onLogout }) => {
   return (
     <SidebarProvider>
-        <AppSidebar />
+        <AppSidebar user={user} onLogout={onLogout} />
       <SidebarInset className="relative">
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 relative z-10">
           <div className="flex items-center gap-2 px-4">
@@ -36,23 +37,7 @@ const AppLayout = ({ children, user, onLogout }) => {
             </Breadcrumb>
           </div>
           
-          {/* User info and logout */}
-          <div className="ml-auto flex items-center gap-4 px-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white text-sm font-medium">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-              <span className="text-sm font-medium">{user?.name || 'Usuário'}</span>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onLogout}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              Sair
-            </Button>
-          </div>
+
         </header>
         
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

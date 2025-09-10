@@ -41,7 +41,9 @@ const Login = ({ onLogin }) => {
           return;
         }
         
+        // Check if running in Electron or browser
         if (typeof window !== 'undefined' && window.electronAPI) {
+          // Electron mode
           const result = await window.electronAPI.auth.register(
             formData.email,
             formData.email,
@@ -53,9 +55,25 @@ const Login = ({ onLogin }) => {
           } else {
             setError(result.error || 'Erro ao criar conta');
           }
+        } else {
+          // Browser mode - mock implementation
+          if (formData.email && formData.password) {
+            const mockUser = {
+              id: 1,
+              name: formData.email,
+              email: formData.email,
+              login: formData.email,
+              permissions: ['admin']
+            };
+            onLogin(mockUser);
+          } else {
+            setError('Email e senha são obrigatórios');
+          }
         }
       } else {
+        // Check if running in Electron or browser
         if (typeof window !== 'undefined' && window.electronAPI) {
+          // Electron mode
           const result = await window.electronAPI.auth.login(
             formData.email,
             formData.password
@@ -65,6 +83,21 @@ const Login = ({ onLogin }) => {
             onLogin(result.user);
           } else {
             setError(result.error || 'Credenciais inválidas');
+          }
+        } else {
+          // Browser mode - mock implementation
+          if ((formData.email === 'admin' && formData.password === 'admin123') ||
+              (formData.email && formData.password)) {
+            const mockUser = {
+              id: 1,
+              name: formData.email === 'admin' ? 'Administrador' : formData.email,
+              email: formData.email === 'admin' ? 'admin@daywin.com' : formData.email,
+              login: formData.email,
+              permissions: ['admin']
+            };
+            onLogin(mockUser);
+          } else {
+            setError('Credenciais inválidas. Use admin/admin123 ou qualquer email/senha');
           }
         }
       }
@@ -77,12 +110,11 @@ const Login = ({ onLogin }) => {
   };
 
   const handleDemoLogin = () => {
-    if (formData.email === 'admin' && formData.password === 'admin123') {
-      setFormData({ email: 'admin', password: 'admin123' });
+    setFormData({ email: 'admin', password: 'admin123' });
+    // Trigger form submission with demo credentials
+    setTimeout(() => {
       handleSubmit({ preventDefault: () => {} });
-    } else {
-      setError('Use as credenciais: admin / admin123');
-    }
+    }, 100);
   };
 
   return (

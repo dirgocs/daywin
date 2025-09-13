@@ -372,7 +372,7 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
                   ) : (
                     <span className={`truncate max-w-[12rem] px-2 py-0.5 rounded-md ${colorClass}`}>{displayName}</span>
                   )}
-                  <span className="text-muted-foreground text-[10px]">({funcao.pontos}x)</span>
+                  {/* Peso removido do badge; exibido na tela principal */}
                   <Button
                     variant="ghost"
                     size="sm"

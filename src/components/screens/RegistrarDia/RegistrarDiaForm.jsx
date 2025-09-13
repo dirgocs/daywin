@@ -159,8 +159,8 @@ const RegistrarDiaForm = () => {
             </div>
           </div>
 
-          {/* 2a linha: Função exercida, Horas trabalhadas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* 2a linha: Função exercida, Peso da Função, Valor da diária */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FuncaoSelector
               selectedFuncoes={formData.funcoesSelecionadas}
               onChange={(funcoes, tipo = 'maior') => setFormData(prev => ({ 
@@ -170,6 +170,27 @@ const RegistrarDiaForm = () => {
               }))}
               showCalculationInline={false}
             />
+            <div className="space-y-2">
+              <Label htmlFor="peso" className="flex items-center gap-2">
+                <Calculator className="h-4 w-4" />
+                Peso da Função (x)
+              </Label>
+              <Input
+                id="peso"
+                type="text"
+                readOnly
+                value={(() => {
+                  if (funcoesData.length === 0) return '';
+                  const pontosMaior = Math.max(...funcoesData.map(f => f.pontos), 0);
+                  const pontosSoma = funcoesData.reduce((total, f) => total + f.pontos, 0);
+                  const efetivo = formData.funcoesSelecionadas.length > 1
+                    ? (formData.calculoTipo === 'maior' ? pontosMaior : pontosSoma)
+                    : (funcoesData[0]?.pontos ?? 0);
+                  return `${Number(efetivo).toFixed(1)}x`;
+                })()}
+                className="text-right"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="valor" className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />

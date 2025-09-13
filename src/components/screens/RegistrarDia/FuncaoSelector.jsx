@@ -182,7 +182,6 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
       <div className="space-y-2">
         {/* Input com autocomplete e ícone de configurações */}
         <div className="relative">
-          <div className="flex">
             <Input
               ref={inputRef}
               value={inputValue}
@@ -196,14 +195,13 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
             />
             <Popover open={managementOpen} onOpenChange={setManagementOpen}>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="ml-1"
+                <button
                   type="button"
+                  aria-label="Gerenciar funções"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1 h-7 w-7 flex items-center justify-center text-muted-foreground opacity-60 hover:opacity-100 hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <Tag className="h-4 w-4" />
-                </Button>
+                </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-2 text-xs">
                 <div className="space-y-2">
@@ -346,7 +344,6 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
               </div>
             </div>
           )}
-        </div>
 
         {/* Tags das funções selecionadas */}
         {funcoesData.length > 0 && (

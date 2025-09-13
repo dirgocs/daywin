@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ const RegistrarDiaForm = () => {
   const [formData, setFormData] = useState({
     diaristaId: '',
     funcoesSelecionadas: [],
-    calculoTipo: 'maior',
+    calculoTipo: 'primeira',
     data: new Date().toISOString().split('T')[0],
     horas: '',
     valorDiaria: '',
@@ -24,6 +24,7 @@ const RegistrarDiaForm = () => {
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [valorEdited, setValorEdited] = useState(false);
 
   // Carregar funções do DB e mapear selecionadas
   const { funcoes: availableFuncoes } = useFuncoes();
@@ -47,6 +48,8 @@ const RegistrarDiaForm = () => {
       if (funcoesData.length > 0) {
         if (formData.calculoTipo === 'maior') {
           multiplicador = Math.max(...funcoesData.map(f => f.pontos));
+        } else if (formData.calculoTipo === 'primeira') {
+          multiplicador = funcoesData[0]?.pontos || 0;
         } else {
           multiplicador = funcoesData.reduce((total, f) => total + f.pontos, 0);
         }
@@ -75,12 +78,13 @@ const RegistrarDiaForm = () => {
     setFormData({
       diaristaId: '',
       funcoesSelecionadas: [],
-      calculoTipo: 'maior',
+      calculoTipo: 'primeira',
       data: new Date().toISOString().split('T')[0],
       horas: '',
       valorDiaria: '',
       observacoes: ''
     });
+    setValorEdited(false);
   };
 
   const isFormValid = formData.diaristaId && formData.funcoesSelecionadas.length > 0 && 
@@ -90,16 +94,40 @@ const RegistrarDiaForm = () => {
   const handleHorasChange = (e) => {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, horas: value }));
-    if (value && !formData.valorDiaria) {
-      const valorSugerido = parseFloat(value) * 25;
-      setFormData(prev => ({ ...prev, valorDiaria: valorSugerido.toFixed(2) }));
-    }
   };
 
   const handleValorChange = (e) => {
-    const value = e.target.value.replace(/[^0-9.,]/g, '');
+    const raw = e.target.value;
+    const value = raw.replace(/[^0-9.,]/g, '');
+    setValorEdited(value.trim() !== '');
     setFormData(prev => ({ ...prev, valorDiaria: value }));
   };
+
+  // Multiplicador efetivo com base nas funções selecionadas e tipo de cálculo
+  const effectiveMultiplier = useMemo(() => {
+    if (funcoesData.length === 0) return 0;
+    if (formData.funcoesSelecionadas.length > 1) {
+      if (formData.calculoTipo === 'maior') {
+        return Math.max(...funcoesData.map(f => f.pontos));
+      }
+      if (formData.calculoTipo === 'primeira') {
+        return funcoesData[0]?.pontos ?? 0;
+      }
+      return funcoesData.reduce((sum, f) => sum + f.pontos, 0);
+    }
+    return funcoesData[0]?.pontos ?? 0;
+  }, [funcoesData, formData.funcoesSelecionadas.length, formData.calculoTipo]);
+
+  // Auto-preencher valor da diária com base na função (mantendo campo editável)
+  useEffect(() => {
+    const horas = parseFloat(String(formData.horas || '').replace(',', '.'));
+    if (!valorEdited && !Number.isNaN(horas) && horas > 0) {
+      const baseHora = 25; // base/hora padrão
+      const mult = effectiveMultiplier || 1;
+      const sugestao = horas * baseHora * mult;
+      setFormData(prev => ({ ...prev, valorDiaria: sugestao.toFixed(2) }));
+    }
+  }, [effectiveMultiplier, formData.horas, valorEdited]);
 
   if (success) {
     return (
@@ -159,8 +187,8 @@ const RegistrarDiaForm = () => {
             </div>
           </div>
 
-          {/* 2a linha: Função exercida, Peso da Função, Valor da diária */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* 2a linha: Função exercida (maior), Peso + Valor lado a lado (compactos) */}
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_320px] gap-6">
             <FuncaoSelector
               selectedFuncoes={formData.funcoesSelecionadas}
               onChange={(funcoes, tipo = 'maior') => setFormData(prev => ({ 
@@ -170,41 +198,48 @@ const RegistrarDiaForm = () => {
               }))}
               showCalculationInline={false}
             />
-            <div className="space-y-2">
-              <Label htmlFor="peso" className="flex items-center gap-2">
-                <Calculator className="h-4 w-4" />
-                Peso da Função (x)
-              </Label>
-              <Input
-                id="peso"
-                type="text"
-                readOnly
-                value={(() => {
-                  if (funcoesData.length === 0) return '';
-                  const pontosMaior = Math.max(...funcoesData.map(f => f.pontos), 0);
-                  const pontosSoma = funcoesData.reduce((total, f) => total + f.pontos, 0);
-                  const efetivo = formData.funcoesSelecionadas.length > 1
-                    ? (formData.calculoTipo === 'maior' ? pontosMaior : pontosSoma)
-                    : (funcoesData[0]?.pontos ?? 0);
-                  return `${Number(efetivo).toFixed(1)}x`;
-                })()}
-                className="text-right"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="valor" className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Valor da Diária (R$)
-              </Label>
-              <Input
-                id="valor"
-                type="text"
-                placeholder="200,00"
-                value={formData.valorDiaria}
-                onChange={handleValorChange}
-                className="text-right"
-                lang="pt-BR"
-              />
+            <div className="grid grid-cols-2 gap-3 items-start">
+              <div className="space-y-2">
+                <Label htmlFor="peso" className="flex items-center gap-2">
+                  <Calculator className="h-4 w-4" />
+                  Peso da Função (x)
+                </Label>
+                <Input
+                  id="peso"
+                  type="text"
+                  readOnly
+                  value={(() => {
+                    if (funcoesData.length === 0) return '';
+                    const pontosMaior = Math.max(...funcoesData.map(f => f.pontos), 0);
+                    const pontosSoma = funcoesData.reduce((total, f) => total + f.pontos, 0);
+                    const pontosPrimeira = funcoesData[0]?.pontos ?? 0;
+                    const efetivo = formData.funcoesSelecionadas.length > 1
+                      ? (formData.calculoTipo === 'maior' 
+                          ? pontosMaior 
+                          : formData.calculoTipo === 'primeira' 
+                            ? pontosPrimeira 
+                            : pontosSoma)
+                      : (funcoesData[0]?.pontos ?? 0);
+                    return `${Number(efetivo).toFixed(1)}x`;
+                  })()}
+                  className="text-right"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="valor" className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Valor da Diária (R$)
+                </Label>
+                <Input
+                  id="valor"
+                  type="text"
+                  placeholder="200,00"
+                  value={formData.valorDiaria}
+                  onChange={handleValorChange}
+                  className="text-right"
+                  lang="pt-BR"
+                />
+              </div>
             </div>
           </div>
 
@@ -239,13 +274,13 @@ const RegistrarDiaForm = () => {
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="soma" id="soma" />
-                    <Label htmlFor="soma" className="flex items-center gap-2 cursor-pointer">
+                    <RadioGroupItem value="primeira" id="primeira" />
+                    <Label htmlFor="primeira" className="flex items-center gap-2 cursor-pointer">
                       <Calculator className="h-4 w-4 text-blue-500" />
                       <div>
-                        <div className="font-medium">Somar todas</div>
+                        <div className="font-medium">Pontuação da primeira função escolhida</div>
                         <div className="text-sm text-muted-foreground">
-                          Somar pontos de todas as funções ({funcoesData.reduce((total, f) => total + f.pontos, 0).toFixed(1)}x pontos)
+                          Usar os pontos da primeira função selecionada ({(funcoesData[0]?.pontos || 0)}x pontos)
                         </div>
                       </div>
                     </Label>
@@ -286,6 +321,8 @@ const RegistrarDiaForm = () => {
                       let multiplicador = 0;
                       if (formData.calculoTipo === 'maior') {
                         multiplicador = Math.max(...funcoesData.map(f => f.pontos));
+                      } else if (formData.calculoTipo === 'primeira') {
+                        multiplicador = funcoesData[0]?.pontos || 0;
                       } else {
                         multiplicador = funcoesData.reduce((total, f) => total + f.pontos, 0);
                       }
@@ -294,7 +331,7 @@ const RegistrarDiaForm = () => {
                   </Badge>
                   {formData.funcoesSelecionadas.length > 1 && (
                     <Badge variant="secondary" className="text-xs">
-                      {formData.calculoTipo === 'maior' ? 'Maior pontuação' : 'Soma total'}
+                  {formData.calculoTipo === 'maior' ? 'Maior pontuação' : 'Pontuação da primeira função'}
                     </Badge>
                   )}
                 </div>

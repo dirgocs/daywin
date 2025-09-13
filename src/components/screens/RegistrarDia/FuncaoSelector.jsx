@@ -168,9 +168,10 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
   };
   // Removidos: rename/delete do menu de opções (serão tratados em outra área do app)
 
-  // Calcular pontos totais
+  // Calcular pontos auxiliares
   const pontosTotais = funcoesData.reduce((total, f) => total + f.pontos, 0);
   const maiorPontuacao = Math.max(...funcoesData.map(f => f.pontos), 0);
+  const primeiraPontuacao = funcoesData[0]?.pontos || 0;
 
   return (
     <div className="space-y-2">
@@ -398,7 +399,7 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
           </CardHeader>
           <CardContent>
             <RadioGroup 
-              defaultValue="maior"
+              defaultValue="primeira"
               onValueChange={(value) => onChange(selectedFuncoes, value)}
             >
               <div className="flex items-center space-x-2">
@@ -415,13 +416,13 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
               </div>
               
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="soma" id="soma" />
-                <Label htmlFor="soma" className="flex items-center gap-2 cursor-pointer">
+                <RadioGroupItem value="primeira" id="primeira" />
+                <Label htmlFor="primeira" className="flex items-center gap-2 cursor-pointer">
                   <Calculator className="h-4 w-4 text-blue-500" />
                   <div>
-                    <div className="font-medium">Somar todas</div>
+                    <div className="font-medium">Pontuação da primeira função escolhida</div>
                     <div className="text-sm text-muted-foreground">
-                      Somar pontos de todas as funções ({pontosTotais.toFixed(1)}x pontos)
+                      Usar os pontos da primeira função selecionada ({primeiraPontuacao}x pontos)
                     </div>
                   </div>
                 </Label>

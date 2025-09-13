@@ -90,3 +90,9 @@ typings/
 
 # Electron-Forge
 out/
+
+# Local database (PGlite)
+daywin.db/
+
+# Local MCP config with secrets
+#.mcp.json

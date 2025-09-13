@@ -18,6 +18,8 @@ model Funcao {
   funcao_nome  String
   peso_pontos  Decimal  @default("1.00") @db.Decimal(6,2)
   ativo        Boolean  @default(true)
+  color        String   @default("default")
+  ordem        Int      @default(0)
   
   // Relacionamentos
   diaristas       Diarista[]

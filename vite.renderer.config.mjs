@@ -16,6 +16,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['@electric-sql/pglite']
+    exclude: ['electron']
+  },
+  define: {
+    __dirname: 'undefined'
   }
 })

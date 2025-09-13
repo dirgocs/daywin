@@ -22,12 +22,12 @@ This is a "local-first" desktop application built with Electron, React, and Vite
 
 *   **shadcn:** `npx shadcn @latest mcp`
 *   **github-chat:** `uvx github-chat-mcp`
-*   **sequential-thinking:** `npx -y @modelcontextprotocol/server-sequential-thinking`
-*   **fetch:** `uvx mcp-server-fetch`
-*   **puppeteer:** `npx -y @modelcontextprotocol/server-puppeteer`
-*   **github:** `npx -y @modelcontextprotocol/server-github`
+*   **Sequential Thinking:** `npx -y @modelcontextprotocol/server-sequential-thinking`
+*   **Fetch:** `uvx mcp-server-fetch`
+*   **Puppeteer:** `npx -y @modelcontextprotocol/server-puppeteer`
+*   **GitHub:** `npx -y @modelcontextprotocol/server-github`
 *   **context7:** `npx -y @upstash/context7-mcp --api-key ctx7sk-74547057-39cc-420d-a55f-7cf8704f00d0`
-*   **playwright:** `npx -y @executeautomation/playwright-mcp-server`
+*   **Playwright:** `npx -y @executeautomation/playwright-mcp-server`
 
 ## 📁 Project Structure
 

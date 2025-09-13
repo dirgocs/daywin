@@ -35,9 +35,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Funcoes APIs
   funcoes: {
     findAll: () => ipcRenderer.invoke('funcoes:findAll'),
+    findAllActive: () => ipcRenderer.invoke('funcoes:findAllActive'),
+    findById: (id) => ipcRenderer.invoke('funcoes:findById', id),
     create: (data) => ipcRenderer.invoke('funcoes:create', data),
-    update: (id, data) => ipcRenderer.invoke('funcoes:update', id, data),
-    delete: (id) => ipcRenderer.invoke('funcoes:delete', id)
+    update: (data) => ipcRenderer.invoke('funcoes:update', data),
+    updateOrder: (pairs) => ipcRenderer.invoke('funcoes:updateOrder', pairs),
+    deactivate: (id) => ipcRenderer.invoke('funcoes:deactivate', id),
+    activate: (id) => ipcRenderer.invoke('funcoes:activate', id),
+    searchByName: (searchTerm) => ipcRenderer.invoke('funcoes:searchByName', searchTerm),
+    nameExists: (nome, excludeId) => ipcRenderer.invoke('funcoes:nameExists', nome, excludeId),
+    getStats: () => ipcRenderer.invoke('funcoes:getStats'),
+    findByPointsRange: (minPontos, maxPontos) => ipcRenderer.invoke('funcoes:findByPointsRange', minPontos, maxPontos),
+    findMostUsed: (limit) => ipcRenderer.invoke('funcoes:findMostUsed', limit)
   },
 
   // Dias Trabalhados APIs

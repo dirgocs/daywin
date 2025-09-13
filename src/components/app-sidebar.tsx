@@ -1,211 +1,201 @@
-import * as React from "react"
-import { GalleryVerticalEnd, Minus, Plus } from "lucide-react"
+"use client"
 
-import { SearchForm } from "@/components/search-form"
+import * as React from "react"
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+  Calendar,
+  Users,
+  BarChart3,
+  DollarSign,
+  Zap,
+  Settings,
+} from "lucide-react"
+
+import { NavMain } from "@/components/nav-main"
+import { NavUser } from "@/components/nav-user"
+import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Menu data for DayWin system
-const data = {
+const getNavData = (onNavigate?: (page: string) => void) => ({
   navMain: [
     {
-      title: "Dashboard",
+      title: "Lançamentos",
       url: "#",
+      icon: Calendar,
+      isActive: true,
       items: [
         {
-          title: "Visão Geral",
+          title: "Registrar Dia",
           url: "#",
-          isActive: true,
+          onClick: () => onNavigate?.('registrar-dia')
         },
         {
-          title: "Relatórios",
+          title: "Histórico",
           url: "#",
+          onClick: () => onNavigate?.('historico')
+        },
+        {
+          title: "Pendências",
+          url: "#",
+          onClick: () => onNavigate?.('pendencias')
         },
       ],
     },
     {
       title: "Diaristas",
       url: "#",
+      icon: Users,
       items: [
         {
           title: "Cadastro",
           url: "#",
+          onClick: () => onNavigate?.('cadastro-diarista')
         },
         {
           title: "Lista",
           url: "#",
+          onClick: () => onNavigate?.('lista-diaristas')
         },
         {
           title: "Funções",
           url: "#",
-        },
-      ],
-    },
-    {
-      title: "Dias Trabalhados",
-      url: "#",
-      items: [
-        {
-          title: "Registrar Dia",
-          url: "#",
-        },
-        {
-          title: "Histórico",
-          url: "#",
-        },
-        {
-          title: "Pendências",
-          url: "#",
+          onClick: () => onNavigate?.('funcoes')
         },
       ],
     },
     {
       title: "Financeiro",
       url: "#",
+      icon: DollarSign,
       items: [
         {
           title: "Bonificações",
           url: "#",
+          onClick: () => onNavigate?.('bonificacoes')
         },
         {
           title: "Descontos",
           url: "#",
+          onClick: () => onNavigate?.('descontos')
         },
         {
           title: "Taxa de Serviço",
           url: "#",
+          onClick: () => onNavigate?.('taxa-servico')
         },
         {
           title: "Fechamentos",
           url: "#",
+          onClick: () => onNavigate?.('fechamentos')
+        },
+      ],
+    },
+    {
+      title: "Insights",
+      url: "#",
+      icon: BarChart3,
+      items: [
+        {
+          title: "Relatórios",
+          url: "#",
+          onClick: () => onNavigate?.('relatorios')
+        },
+        {
+          title: "Analytics",
+          url: "#",
+          onClick: () => onNavigate?.('analytics')
+        },
+        {
+          title: "Performance",
+          url: "#",
+          onClick: () => onNavigate?.('performance')
         },
       ],
     },
     {
       title: "Configurações",
       url: "#",
+      icon: Settings,
       items: [
         {
-          title: "Usuários",
+          title: "Regras & Distribuição",
           url: "#",
+          onClick: () => onNavigate?.('regras')
         },
         {
-          title: "Permissões",
+          title: "Usuários & Papéis",
           url: "#",
+          onClick: () => onNavigate?.('usuarios')
         },
         {
-          title: "Sistema",
+          title: "Backup & Restore",
           url: "#",
+          onClick: () => onNavigate?.('backup')
         },
         {
-          title: "Backup",
+          title: "Auditoria",
           url: "#",
+          onClick: () => onNavigate?.('auditoria')
         },
       ],
     },
   ],
-}
+})
 
-import { Button } from "@/components/ui/button"
-
-export function AppSidebar({ user, onLogout, ...props }: React.ComponentProps<typeof Sidebar> & { user?: any; onLogout?: () => void }) {
+export function AppSidebar({ user, onLogout, currentPage, onNavigate, ...props }: React.ComponentProps<typeof Sidebar> & { user?: any; onLogout?: () => void; currentPage?: string; onNavigate?: (page: string) => void }) {
+  const { open, state, isMobile } = useSidebar()
+  
   return (
-    <Sidebar {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="#">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <GalleryVerticalEnd className="size-4" />
-                </div>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">Documentation</span>
-                  <span className="">v1.0.0</span>
-                </div>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <SearchForm />
+        <TeamSwitcher onNavigate={onNavigate} />
+        
+        {/* Quick Launch Button */}
+        <div className="p-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className={`${
+                  open
+                    ? "w-full flex items-center gap-2 px-3 py-2"
+                    : "w-full flex items-center justify-center p-2"
+                } text-sm font-medium bg-transparent rounded-lg transition-all duration-300 active:scale-95 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground`}
+                onClick={() => console.log("Lançamento Rápido")}
+              >
+                {open ? (
+                  <>
+                    <Zap className="h-4 w-4 transition-all duration-300" />
+                    <span className="transition-opacity duration-300">Lançamento Rápido</span>
+                  </>
+                ) : (
+                  <Zap className="h-4 w-4 transition-all duration-300 min-w-4 min-h-4" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent
+              side="right"
+              align="center"
+              hidden={state !== "collapsed" || isMobile}
+            >
+              Lançamento Rápido
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            {data.navMain.map((item, index) => (
-              <Collapsible
-                key={item.title}
-                defaultOpen={index === 1}
-                className="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton>
-                      {item.title}{" "}
-                      <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
-                      <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  {item.items?.length ? (
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {item.items.map((item) => (
-                          <SidebarMenuSubItem key={item.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={item.isActive}
-                            >
-                              <a href={item.url}>{item.title}</a>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  ) : null}
-                </SidebarMenuItem>
-              </Collapsible>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+        <NavMain items={getNavData(onNavigate).navMain} />
       </SidebarContent>
-      
-      {/* User info and logout in footer */}
       <SidebarFooter>
-        <div className="flex items-center gap-2 p-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white text-sm font-medium">
-            {user?.name?.charAt(0) || 'U'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <span className="text-sm font-medium truncate">{user?.name || 'Usuário'}</span>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onLogout}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 px-2 text-xs"
-          >
-            Sair
-          </Button>
-        </div>
+        <NavUser user={{ name: user?.name || 'Usuário', email: user?.email || 'usuario@daywin.com' }} onLogout={onLogout} />
       </SidebarFooter>
-      
       <SidebarRail />
     </Sidebar>
   )

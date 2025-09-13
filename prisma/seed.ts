@@ -189,6 +189,61 @@ async function main() {
     });
   }
 
+  // 7. Seed de Funções — Brigada Francesa (restaurante)
+  console.log('👨‍🍳 Criando funções da brigada francesa (restaurante)...');
+  const funcoesCount = await prisma.funcao.count();
+  if (funcoesCount === 0) {
+    const brigada = [
+      // Cozinha
+      { nome: 'Chefe de Cozinha', peso: 1.8 },
+      { nome: 'Sous-chef', peso: 1.6 },
+      { nome: 'Chef de Molhos', peso: 1.4 },
+      { nome: 'Chef de Peixes', peso: 1.3 },
+      { nome: 'Chef de Assados', peso: 1.3 },
+      { nome: 'Chef de Grelhados', peso: 1.2 },
+      { nome: 'Chef de Frituras', peso: 1.2 },
+      { nome: 'Chef de Legumes e Ovos', peso: 1.2 },
+      { nome: 'Chef de Frios e Saladas', peso: 1.2 },
+      { nome: 'Confeiteiro', peso: 1.4 },
+      { nome: 'Padeiro', peso: 1.2 },
+      { nome: 'Sorveteiro', peso: 1.1 },
+      { nome: 'Açougueiro', peso: 1.1 },
+      { nome: 'Cozinheiro Coringa', peso: 1.1 },
+      { nome: 'Cumim', peso: 0.9 },
+      { nome: 'Lavador', peso: 0.8 },
+      { nome: 'Expeditor', peso: 1.0 },
+      // Salão/Serviço
+      { nome: 'Garçom', peso: 1.0 },
+      { nome: 'Faxineiro', peso: 0.9 },
+      { nome: 'Maître', peso: 1.4 },
+    ];
+
+    await prisma.funcao.createMany({
+      data: brigada.map((f) => ({
+        funcao_nome: f.nome,
+        peso_pontos: f.peso,
+        ativo: true,
+        color: 'default',
+      })),
+    });
+    console.log('✅ Funções da brigada francesa criadas.');
+  } else {
+    console.log('ℹ️ Tabela de funções já possui registros; seed ignorado.');
+  }
+
+  // 7.1 Ajuste de nomenclatura legado (Mantenedor de Salão → Faxineiro)
+  try {
+    const updated = await prisma.funcao.updateMany({
+      where: { funcao_nome: 'Mantenedor de Salão' },
+      data: { funcao_nome: 'Faxineiro' },
+    });
+    if (updated.count > 0) {
+      console.log(`🔤 Renomeadas ${updated.count} função(ões) para "Faxineiro".`);
+    }
+  } catch (e) {
+    // silencioso
+  }
+
   console.log('✅ Seeds concluídos com sucesso!');
   console.log('📝 Usuário admin criado:');
   console.log('   Login: admin');

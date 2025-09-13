@@ -1,7 +1,6 @@
 import React from 'react';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
-import TestSidebar from '@/components/TestSidebar';
 import { Separator } from '@/components/ui/separator';
 import {
   Breadcrumb,
@@ -12,40 +11,66 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
+import { ModeToggle } from '@/components/mode-toggle';
 
-const AppLayout = ({ children, user, onLogout }) => {
+const getPageTitle = (currentPage) => {
+  const pageTitles = {
+    'dashboard': 'Dashboard',
+    'registrar-dia': 'Registrar Dia Trabalhado',
+    'historico': 'Histórico de Trabalho',
+    'pendencias': 'Pendências',
+    'cadastro-diarista': 'Cadastro de Diarista',
+    'lista-diaristas': 'Lista de Diaristas',
+    'funcoes': 'Funções e Cargos',
+    'bonificacoes': 'Bonificações',
+    'descontos': 'Descontos',
+    'taxa-servico': 'Taxa de Serviço',
+    'fechamentos': 'Fechamentos',
+    'relatorios': 'Relatórios',
+    'analytics': 'Analytics',
+    'performance': 'Performance',
+    'regras': 'Regras e Distribuição',
+    'usuarios': 'Usuários e Papéis',
+    'backup': 'Backup e Restore',
+    'auditoria': 'Auditoria'
+  };
+  return pageTitles[currentPage] || 'Página';
+};
+
+const AppLayout = ({ children, user, onLogout, currentPage, onNavigate }) => {
   return (
     <SidebarProvider>
-        <AppSidebar user={user} onLogout={onLogout} />
-      <SidebarInset className="relative">
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 relative z-10">
+        <AppSidebar user={user} onLogout={onLogout} currentPage={currentPage} onNavigate={onNavigate} />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4 opacity-0"
+            />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">
-                    Dashboard
+                  <BreadcrumbLink href="#" onClick={() => onNavigate('dashboard')}>
+                    Página Inicial
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Visão Geral</BreadcrumbPage>
+                  <BreadcrumbPage>
+                    {getPageTitle(currentPage)}
+                  </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          
-
-        </header>
-        
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="flex-1 rounded-xl bg-background border">
-            <div className="p-6">
-              {children}
-            </div>
+          <div className="ml-auto px-4">
+            <ModeToggle />
           </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-6 pt-0">
+          {children}
         </div>
       </SidebarInset>
     </SidebarProvider>

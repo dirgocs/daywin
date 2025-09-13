@@ -117,6 +117,9 @@ class DatabaseService {
     if (!this.prisma) return;
 
     console.log('🏗️ Creating initial schema...');
+    
+    // Criar funções iniciais se não existirem
+    await this.createInitialFunctions();
 
     // Criar enum Priority
     await this.prisma.$executeRaw`
@@ -190,6 +193,50 @@ class DatabaseService {
     await this.prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "HabitEntry_date_idx" ON "HabitEntry"("date");`;
 
     console.log('✅ Initial schema created successfully');
+  }
+
+  /**
+   * Criar funções iniciais do sistema
+   */
+  private async createInitialFunctions(): Promise<void> {
+    if (!this.prisma) return;
+
+    try {
+      console.log('🔧 Creating initial functions...');
+
+      // Verificar se já existem funções
+      const existingFunctions = await this.prisma.funcao.count();
+      
+      if (existingFunctions === 0) {
+        // Criar funções padrão
+        const initialFunctions = [
+          { nome: "Limpeza Geral", descricao: "Limpeza básica de ambientes", pontos: 1.0 },
+          { nome: "Limpeza Pesada", descricao: "Limpeza profunda e pesada", pontos: 1.5 },
+          { nome: "Organização", descricao: "Organização de espaços e objetos", pontos: 0.8 },
+          { nome: "Cozinha", descricao: "Limpeza específica da cozinha", pontos: 1.2 },
+          { nome: "Banheiro", descricao: "Limpeza específica de banheiros", pontos: 1.1 },
+          { nome: "Janelas", descricao: "Limpeza de vidros e janelas", pontos: 0.9 },
+        ];
+
+        for (const funcao of initialFunctions) {
+          await this.prisma.funcao.create({
+            data: {
+              nome: funcao.nome,
+              descricao: funcao.descricao,
+              pontos: funcao.pontos,
+              ativo: true,
+            },
+          });
+        }
+
+        console.log('✅ Initial functions created successfully');
+      } else {
+        console.log('✅ Functions already exist, skipping creation');
+      }
+    } catch (error) {
+      console.error('❌ Error creating initial functions:', error);
+      // Não falhar se houver erro, apenas continuar
+    }
   }
 
   /**

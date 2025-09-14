@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/popover";
 import { useFuncoes } from '../../../hooks/useFuncoes';
 
-const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalculationInline = true }) => {
+const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [] }) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [managementOpen, setManagementOpen] = useState(false);
@@ -100,9 +100,9 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
   };
 
   const handleSelectFuncao = (funcaoId) => {
-    if (!selectedFuncoes.includes(funcaoId)) {
-      const newSelectedFuncoes = [...selectedFuncoes, funcaoId];
-      onChange(newSelectedFuncoes);
+    // Single select: substitui a seleção
+    if (!(selectedFuncoes.length === 1 && selectedFuncoes[0] === funcaoId)) {
+      onChange([funcaoId]);
     }
     setInputValue('');
     setShowSuggestions(false);
@@ -170,8 +170,6 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
 
   // Calcular pontos auxiliares
   const pontosTotais = funcoesData.reduce((total, f) => total + f.pontos, 0);
-  const maiorPontuacao = Math.max(...funcoesData.map(f => f.pontos), 0);
-  const primeiraPontuacao = funcoesData[0]?.pontos || 0;
 
   return (
     <div className="space-y-2">
@@ -181,19 +179,52 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
       </Label>
       
       <div className="space-y-2">
-        {/* Input com autocomplete e ícone de configurações */}
+        {/* Input com chips dentro + ícone de configurações */}
         <div className="relative">
-            <Input
-              ref={inputRef}
-              value={inputValue}
-              onChange={handleInputChange}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-              onKeyPress={handleKeyPress}
-              placeholder="Digite para buscar funções..."
-              className="pr-10"
-              lang="pt-BR"
-            />
+            <div
+              className="min-h-10 w-full rounded-md border bg-background px-2 py-1 pr-10 text-sm flex flex-wrap items-center gap-1 focus-within:ring-2 focus-within:ring-ring focus-within:outline-none"
+              onClick={() => inputRef.current?.focus()}
+            >
+              {funcoesData.map((funcao) => {
+                const fullName = funcao.funcao_nome || '';
+                const isTruncated = fullName.length > 30;
+                const displayName = isTruncated ? `${fullName.slice(0, 30).trimEnd()}...` : fullName;
+                const colorClass = chipColors[funcao.color] || chipColors.default;
+                return (
+                  <span key={funcao.id} className="inline-flex items-center gap-1">
+                    {isTruncated ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={`truncate max-w-[10rem] px-2 py-0.5 rounded-md ${colorClass}`}>{displayName}</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="start">{fullName}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <span className={`truncate max-w-[10rem] px-2 py-0.5 rounded-md ${colorClass}`}>{displayName}</span>
+                    )}
+                    <button
+                      type="button"
+                      className="rounded p-0.5 hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={(e) => { e.stopPropagation(); handleRemoveFuncao(funcao.id.toString()); }}
+                      aria-label={`Remover ${fullName}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                );
+              })}
+              <input
+                ref={inputRef}
+                value={inputValue}
+                onChange={handleInputChange}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
+                onKeyPress={handleKeyPress}
+                placeholder={funcoesData.length === 0 ? "Digite para buscar funções..." : "Adicionar função"}
+                className="flex-1 min-w-[8rem] bg-transparent outline-none border-0 h-8"
+                lang="pt-BR"
+              />
+            </div>
             <Popover open={managementOpen} onOpenChange={setManagementOpen}>
               <PopoverTrigger asChild>
                 <button
@@ -328,65 +359,44 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
             </Popover>
           </div>
           
-          {/* Sugestões de autocomplete */}
+          {/* Sugestões de autocomplete (mesma estética do popover de TAG) */}
           {showSuggestions && filteredSuggestions.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg">
+            <div className="absolute left-[2px] z-50 mt-[2px] rounded-md border bg-popover p-2 text-popover-foreground text-xs shadow-md w-auto min-w-[16rem] max-w-[22rem]">
               <div className="max-h-40 overflow-y-auto">
-                {filteredSuggestions.map((funcao) => (
-                  <div
-                    key={funcao.id}
-                    className="px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground flex items-center justify-between"
-                    onClick={() => handleSelectFuncao(funcao.id.toString())}
-                  >
-                    <span>{funcao.funcao_nome}</span>
-                    <span className="text-sm text-muted-foreground">({funcao.pontos}x)</span>
-                  </div>
-                ))}
+                {filteredSuggestions.map((funcao) => {
+                  const fullName = funcao.funcao_nome || '';
+                  const isTruncated = fullName.length > 30;
+                  const displayName = isTruncated ? `${fullName.slice(0, 30).trimEnd()}...` : fullName;
+                  const colorClass = chipColors[funcao.color] || chipColors.default;
+                  return (
+                    <button
+                      type="button"
+                      key={funcao.id}
+                      className="w-full rounded-sm px-1.5 py-1.5 text-left cursor-pointer hover:bg-accent hover:text-accent-foreground flex items-center"
+                      onClick={() => handleSelectFuncao(funcao.id.toString())}
+                    >
+                      {isTruncated ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className={`truncate max-w-[14rem] px-2 py-0.5 rounded-md ${colorClass}`}>{displayName}</span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" align="start">{fullName}</TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <span className={`truncate max-w-[14rem] px-2 py-0.5 rounded-md ${colorClass}`}>{displayName}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
-        {/* Tags das funções selecionadas */}
-        {funcoesData.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {funcoesData.map((funcao) => {
-              const fullName = funcao.funcao_nome || '';
-              const isTruncated = fullName.length > 30;
-              const displayName = isTruncated
-                ? `${fullName.slice(0, 30).trimEnd()}...`
-                : fullName;
-              const colorClass = chipColors[funcao.color] || chipColors.default;
-              return (
-                <Badge key={funcao.id} variant="outline" className="gap-1 pr-1 px-0 py-0 bg-transparent border-transparent">
-                  {isTruncated ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className={`truncate max-w-[12rem] px-2 py-0.5 rounded-md ${colorClass}`}>{displayName}</span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" align="start">
-                        {fullName}
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <span className={`truncate max-w-[12rem] px-2 py-0.5 rounded-md ${colorClass}`}>{displayName}</span>
-                  )}
-                  {/* Peso removido do badge; exibido na tela principal */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto p-0.5 hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={() => handleRemoveFuncao(funcao.id.toString())}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              );
-            })}
-          </div>
-        )}
+        {/* Chips agora ficam dentro do campo acima */}
       </div>
 
-      {showCalculationInline && selectedFuncoes.length > 1 && (
+      {/* Removido: cálculo para múltiplas funções (modo single-select) */}
+      {false && selectedFuncoes.length > 1 && (
         <Card className="border-amber-200 bg-amber-50/50 shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -432,7 +442,7 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [], showCalc
         </Card>
       )}
 
-      {showCalculationInline && selectedFuncoes.length === 1 && (
+      {false && selectedFuncoes.length === 1 && (
         <div className="text-sm text-muted-foreground">
           <Badge variant="secondary">
             {funcoesData[0]?.pontos}x pontos - {funcoesData[0]?.funcao_nome}

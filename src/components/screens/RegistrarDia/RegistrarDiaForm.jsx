@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Save, RotateCcw, CheckCircle, Calendar as CalendarIcon, DollarSign, Clock, Calculator, Crown } from "lucide-react";
+import { Save, RotateCcw, CheckCircle, Calendar as CalendarIcon, DollarSign, Clock, Calculator } from "lucide-react";
 import DiaristaSelector from './DiaristaSelector';
 import FuncaoSelector from './FuncaoSelector';
 import DataObservacaoInput from './DataObservacaoInput';
@@ -15,7 +15,7 @@ const RegistrarDiaForm = () => {
   const [formData, setFormData] = useState({
     diaristaId: '',
     funcoesSelecionadas: [],
-    calculoTipo: 'primeira',
+    // Sem cálculo de múltiplas funções: apenas uma função selecionada
     data: new Date().toISOString().split('T')[0],
     horas: '',
     valorDiaria: '',
@@ -43,17 +43,8 @@ const RegistrarDiaForm = () => {
       // Mock API call - em produção seria uma chamada real
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Calcular pontos baseado no tipo de cálculo
-      let multiplicador = 0;
-      if (funcoesData.length > 0) {
-        if (formData.calculoTipo === 'maior') {
-          multiplicador = Math.max(...funcoesData.map(f => f.pontos));
-        } else if (formData.calculoTipo === 'primeira') {
-          multiplicador = funcoesData[0]?.pontos || 0;
-        } else {
-          multiplicador = funcoesData.reduce((total, f) => total + f.pontos, 0);
-        }
-      }
+      // Calcular pontos baseado na função única selecionada
+      const multiplicador = funcoesData[0]?.pontos || 0;
 
       console.log('Dados do formulário:', {
         ...formData,
@@ -78,7 +69,6 @@ const RegistrarDiaForm = () => {
     setFormData({
       diaristaId: '',
       funcoesSelecionadas: [],
-      calculoTipo: 'primeira',
       data: new Date().toISOString().split('T')[0],
       horas: '',
       valorDiaria: '',
@@ -243,52 +233,7 @@ const RegistrarDiaForm = () => {
             </div>
           </div>
 
-          {/* 3a linha: Box fixo de cálculo de pontos (sempre visível) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-amber-200 bg-amber-50/50 shadow-none md:col-span-2">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Calculator className="h-4 w-4" />
-                  Cálculo de Pontos - Múltiplas Funções
-                </CardTitle>
-                <CardDescription>
-                  Como deseja calcular os pontos para múltiplas funções?
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RadioGroup 
-                  value={formData.calculoTipo}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, calculoTipo: value }))}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="maior" id="maior" />
-                    <Label htmlFor="maior" className="flex items-center gap-2 cursor-pointer">
-                      <Crown className="h-4 w-4 text-amber-500" />
-                      <div>
-                        <div className="font-medium">Maior pontuação</div>
-                        <div className="text-sm text-muted-foreground">
-                          Usar apenas a função de maior valor ({Math.max(...funcoesData.map(f => f.pontos), 0)}x pontos)
-                        </div>
-                      </div>
-                    </Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="primeira" id="primeira" />
-                    <Label htmlFor="primeira" className="flex items-center gap-2 cursor-pointer">
-                      <Calculator className="h-4 w-4 text-blue-500" />
-                      <div>
-                        <div className="font-medium">Pontuação da primeira função escolhida</div>
-                        <div className="text-sm text-muted-foreground">
-                          Usar os pontos da primeira função selecionada ({(funcoesData[0]?.pontos || 0)}x pontos)
-                        </div>
-                      </div>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Removido: cálculo de múltiplas funções (apenas uma função pode ser escolhida) */}
 
           {/* 4a linha: Observações */}
           <DataObservacaoInput
@@ -315,25 +260,13 @@ const RegistrarDiaForm = () => {
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={formData.funcoesSelecionadas.length > 1 ? "default" : "outline"}>
+                  <Badge variant="outline">
                     Pontos: {(() => {
                       if (funcoesData.length === 0) return '0';
-                      let multiplicador = 0;
-                      if (formData.calculoTipo === 'maior') {
-                        multiplicador = Math.max(...funcoesData.map(f => f.pontos));
-                      } else if (formData.calculoTipo === 'primeira') {
-                        multiplicador = funcoesData[0]?.pontos || 0;
-                      } else {
-                        multiplicador = funcoesData.reduce((total, f) => total + f.pontos, 0);
-                      }
+                      const multiplicador = funcoesData[0]?.pontos || 0;
                       return (parseFloat(formData.horas || 0) * multiplicador).toFixed(1);
                     })()}
                   </Badge>
-                  {formData.funcoesSelecionadas.length > 1 && (
-                    <Badge variant="secondary" className="text-xs">
-                  {formData.calculoTipo === 'maior' ? 'Maior pontuação' : 'Pontuação da primeira função'}
-                    </Badge>
-                  )}
                 </div>
               </div>
             </div>

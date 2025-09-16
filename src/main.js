@@ -354,6 +354,56 @@ ipcMain.handle('reports:diasTrabalhadosPorDiarista', async (event, params) => {
   }
 });
 
+// Reports - Gastos com diárias por mês (últimos 6 meses)
+ipcMain.handle('reports:gastosMensais', async (event) => {
+  try {
+    const prisma = await databaseService.getClient();
+    const now = new Date();
+    const results = [];
+    for (let i = 6; i >= 1; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const start = new Date(date.getFullYear(), date.getMonth(), 1);
+      const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      const sum = await prisma.diaTrabalhado.aggregate({
+        _sum: { diaria_valor: true },
+        where: { data: { gte: start, lte: end } },
+      });
+      results.push({
+        year: start.getFullYear(),
+        month: start.getMonth() + 1,
+        value: Number(sum._sum.diaria_valor || 0),
+      });
+    }
+    return { success: true, data: results };
+  } catch (error) {
+    console.error('Error reporting gastosMensais:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Reports - Diaristas por dia da semana (intervalo)
+ipcMain.handle('reports:diaristasPorDiaSemana', async (event, params) => {
+  try {
+    const prisma = await databaseService.getClient();
+    const start = new Date(params.start);
+    const end = new Date(params.end);
+    // Buscar todas as datas no intervalo e agregar no Node
+    const rows = await prisma.diaTrabalhado.findMany({
+      where: { data: { gte: start, lte: end } },
+      select: { data: true },
+    });
+    const counts = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    for (const r of rows) {
+      const dow = new Date(r.data).getDay(); // 0=Sun
+      counts[dow] = (counts[dow] || 0) + 1;
+    }
+    return { success: true, data: counts };
+  } catch (error) {
+    console.error('Error reporting diaristasPorDiaSemana:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('funcoes:findAllActive', async (event) => {
   try {
     const funcoes = await funcaoRepo.findAllActive();

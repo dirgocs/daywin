@@ -244,6 +244,80 @@ async function main() {
     // silencioso
   }
 
+  // 8. Criar diaristas de exemplo
+  console.log('🧹 Criando diaristas de exemplo...');
+  const diaristasCount = await prisma.diarista.count();
+  if (diaristasCount === 0) {
+    const funcoes = await prisma.funcao.findMany({ select: { funcao_id: true } });
+    const funcIds = funcoes.map((f) => f.funcao_id);
+    const pickFunc = () => funcIds[Math.floor(Math.random() * funcIds.length)];
+
+    const nomes = [
+      'Maria Silva',
+      'Ana Costa',
+      'João Santos',
+      'Paula Oliveira',
+      'Carlos Ferreira',
+      'Lucia Pereira',
+      'Fernanda Lima',
+      'Bruna Souza',
+      'Pedro Gomes',
+      'Rafaela Alves',
+    ];
+
+    await prisma.diarista.createMany({
+      data: nomes.map((nome, i) => ({
+        nome_completo: nome,
+        apelido: nome.split(' ')[0],
+        telefone: `11 9${(10000000 + i * 12345).toString().slice(0, 8)}`,
+        email: undefined,
+        funcao_id: pickFunc(),
+        ativo: true,
+      })),
+    });
+    console.log('✅ Diaristas criadas');
+  } else {
+    console.log('ℹ️ Tabela de diaristas já possui registros; seed ignorado.');
+  }
+
+  // 9. Criar lançamentos de dias trabalhados recentes (para gráficos)
+  console.log('🗓️ Gerando dias trabalhados recentes...');
+  const diaristas = await prisma.diarista.findMany({ select: { diarista_id: true } });
+  const diaristaIds = diaristas.map((d) => d.diarista_id);
+  if (diaristaIds.length > 0) {
+    const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const now = new Date();
+    // Últimos 7 meses (garante cobertura)
+    for (let back = 7; back >= 0; back--) {
+      const year = now.getFullYear();
+      const month = now.getMonth() - back;
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 0);
+      const daysInMonth = end.getDate();
+      const entries = rand(18, 36);
+      const batch: any[] = [];
+      for (let k = 0; k < entries; k++) {
+        const day = rand(1, daysInMonth);
+        const date = new Date(year, month, day);
+        if (date > now) continue; // nunca futuro
+        const diarista_id = diaristaIds[rand(0, diaristaIds.length - 1)];
+        const func = await prisma.funcao.findFirst({ select: { funcao_id: true } });
+        batch.push({
+          data: date,
+          diarista_id,
+          funcao_id: func?.funcao_id ?? null,
+          horas_trabalhadas: rand(4, 10),
+          diaria_valor: rand(120, 280),
+          observacoes: null,
+        });
+      }
+      if (batch.length) {
+        await prisma.diaTrabalhado.createMany({ data: batch });
+      }
+    }
+    console.log('✅ Lançamentos criados');
+  }
+
   console.log('✅ Seeds concluídos com sucesso!');
   console.log('📝 Usuário admin criado:');
   console.log('   Login: admin');

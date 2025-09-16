@@ -103,7 +103,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     diaristas: (filters) => ipcRenderer.invoke('reports:diaristas', filters),
     financeiro: (filters) => ipcRenderer.invoke('reports:financeiro', filters),
     periodo: (periodoId) => ipcRenderer.invoke('reports:periodo', periodoId),
-    diasTrabalhadosPorDiarista: (params) => ipcRenderer.invoke('reports:diasTrabalhadosPorDiarista', params)
+    diasTrabalhadosPorDiarista: (params) => ipcRenderer.invoke('reports:diasTrabalhadosPorDiarista', params),
+    gastosMensais: () => ipcRenderer.invoke('reports:gastosMensais'),
+    diaristasPorDiaSemana: (params) => ipcRenderer.invoke('reports:diaristasPorDiaSemana', params)
   },
 
   // Exports APIs

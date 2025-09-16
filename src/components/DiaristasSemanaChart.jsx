@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, Cell } from 'recharts'
 import { BarChart3, ChevronLeft, ChevronRight } from 'lucide-react'
 
@@ -55,7 +55,40 @@ export function DiaristasSemanaChart() {
     if (newOffset >= -52 && newOffset <= 0) setCurrentWeekOffset(newOffset)
   }
 
-  const data = useMemo(() => getWeekData(currentWeekOffset), [currentWeekOffset])
+  const [data, setData] = useState(getWeekData(currentWeekOffset))
+
+  useEffect(() => {
+    const today = new Date()
+    const dayOfWeek = today.getDay()
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+    const monday = new Date(today)
+    monday.setDate(today.getDate() + diff + currentWeekOffset * 7)
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+
+    ;(async () => {
+      try {
+        const res = await window.electronAPI?.reports?.diaristasPorDiaSemana?.({
+          start: monday.toISOString(),
+          end: sunday.toISOString(),
+        })
+        if (res?.success) {
+          const map = res.data // keys 0..6
+          const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+          const ordered = [1, 2, 3, 4, 5, 6, 0].map((dow) => ({
+            day: dayNames[dow],
+            cleaners: map[dow] || 0,
+            date: '',
+          }))
+          setData(ordered)
+        } else {
+          setData(getWeekData(currentWeekOffset))
+        }
+      } catch {
+        setData(getWeekData(currentWeekOffset))
+      }
+    })()
+  }, [currentWeekOffset])
 
   return (
     <Card>

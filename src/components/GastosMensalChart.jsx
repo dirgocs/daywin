@@ -20,26 +20,21 @@ export function GastosMensalChart() {
   const [loading, setLoading] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
-  // Função dinâmica para calcular gastos dos últimos 6 meses
+  // Buscar gastos dos últimos 6 meses via IPC
   const calculateLastSixMonthsData = async () => {
     try {
       setLoading(true);
-      
-      // Simular busca no banco de dados - substituir por chamada real
-      const mockGastos = await fetchGastosFromDatabase();
-      
+      const res = await window.electronAPI?.reports?.gastosMensais?.();
       const now = new Date();
       const monthsData = [];
-      
       for (let i = 6; i >= 1; i--) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthName = date.toLocaleDateString('pt-BR', { month: 'short' });
         const year = date.getFullYear();
-        const monthKey = `${year}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        
-        // Buscar gastos reais deste mês
-        const gastosDoMes = mockGastos[monthKey] || 0;
-        
+        const monthKey = date.getMonth() + 1;
+        const gastosDoMes = res?.success
+          ? (res.data.find((d) => d.year === year && d.month === monthKey)?.value || 0)
+          : 0;
         monthsData.push({
           month: monthName.charAt(0).toUpperCase() + monthName.slice(1, 3),
           value: gastosDoMes,
@@ -66,30 +61,7 @@ export function GastosMensalChart() {
     }
   };
 
-  // Função para buscar dados do banco - SUBSTITUIR por implementação real
-  const fetchGastosFromDatabase = async () => {
-    // TODO: Integrar com o banco de dados real via electron API
-    // return await window.electronAPI?.gastos.getLastSixMonths() || {};
-    
-    // Por enquanto, simular dados variáveis baseados na data atual
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    const mockData = {};
-    for (let i = 6; i >= 1; i--) {
-      const date = new Date(currentYear, currentMonth - i, 1);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
-      // Valores que variam baseado no mês atual (dinâmico)
-      const baseValue = Math.floor(Math.random() * 3000) + 1000;
-      const seasonalMultiplier = (date.getMonth() % 3 + 1) * 0.8;
-      mockData[monthKey] = Math.floor(baseValue * seasonalMultiplier);
-    }
-    
-    console.log('Dados dinâmicos gerados:', mockData);
-    return mockData;
-  };
+  // removeu mock local
 
   // Carregar dados ao montar o componente
   useEffect(() => {

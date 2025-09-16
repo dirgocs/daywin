@@ -13,7 +13,7 @@ import Bonificacoes from './screens/Bonificacoes';
 import Descontos from './screens/Descontos';
 import TaxaServico from './screens/TaxaServico';
 import DiariasAPagar from './screens/DiariasAPagar';
-import { Fechamentos, Relatorios, Analytics, Performance, Regras, Usuarios, Backup, Auditoria } from './screens/index';
+import NotImplemented from './screens/NotImplemented';
 import Jornada from './screens/Jornada';
 
 import { Button } from '@/components/ui/button';
@@ -349,15 +349,119 @@ const App = () => {
               {currentPage === 'descontos' && <Descontos />}
               {currentPage === 'taxa-servico' && <TaxaServico />}
               {currentPage === 'diarias-a-pagar' && <DiariasAPagar />}
-              {currentPage === 'fechamentos' && <Fechamentos />}
-              {currentPage === 'relatorios' && <Relatorios />}
-              {currentPage === 'analytics' && <Analytics />}
-              {currentPage === 'performance' && <Performance />}
-              {currentPage === 'regras' && <Regras />}
+              {currentPage === 'fechamentos' && (
+                <NotImplemented
+                  pageName="Fechamentos"
+                  description="Gerencie períodos e fechamentos para cálculo de pagamentos."
+                  features={[
+                    "Criar períodos (diário, semanal, quinzenal, mensal, custom)",
+                    "Configurar âncoras e frequências",
+                    "Visualizar períodos abertos/fechados",
+                    "Prévia detalhada de cálculos",
+                    "Fechamento definitivo e travamento",
+                    "Exportação CSV/XLSX"
+                  ]}
+                />
+              )}
+              {currentPage === 'relatorios' && (
+                <NotImplemented
+                  pageName="Relatórios"
+                  description="Gere relatórios detalhados sobre trabalho e pagamentos."
+                  features={[
+                    "Relatórios por período específico",
+                    "Filtros por diarista individual",
+                    "Agrupamento por função",
+                    "Comparativos entre períodos",
+                    "Exportação CSV/XLSX com formatação",
+                    "Prévia antes da exportação"
+                  ]}
+                />
+              )}
+              {currentPage === 'analytics' && (
+                <NotImplemented
+                  pageName="Analytics"
+                  description="Análises e insights sobre produtividade e custos."
+                  features={[
+                    "Gráficos de evolução mensal",
+                    "Comparação ano sobre ano",
+                    "Tendências de custos",
+                    "ROI por diarista",
+                    "Produtividade por função",
+                    "Indicadores de eficiência"
+                  ]}
+                />
+              )}
+              {currentPage === 'performance' && (
+                <NotImplemented
+                  pageName="Performance"
+                  description="Acompanhe indicadores de performance dos diaristas."
+                  features={[
+                    "Ranking por horas trabalhadas",
+                    "Top performers do mês",
+                    "Consistência de trabalho",
+                    "Pontualidade e frequência",
+                    "Produtividade por diarista",
+                    "Comparação com médias"
+                  ]}
+                />
+              )}
+              {currentPage === 'regras' && (
+                <NotImplemented
+                  pageName="Regras e Distribuição"
+                  description="Configure as regras de cálculo e distribuição de valores."
+                  features={[
+                    "Modo: pontos×horas, apenas horas ou fixo",
+                    "Percentual da taxa para diaristas",
+                    "Horas mínimas para elegibilidade",
+                    "Arredondamento em cinquentavos",
+                    "Frequência de fechamentos",
+                    "Âncoras de período"
+                  ]}
+                />
+              )}
               {currentPage === 'jornada' && <Jornada />}
-              {currentPage === 'usuarios' && <Usuarios />}
-              {currentPage === 'backup' && <Backup />}
-              {currentPage === 'auditoria' && <Auditoria />}
+              {currentPage === 'usuarios' && (
+                <NotImplemented
+                  pageName="Usuários e Papéis"
+                  description="Gerencie usuários do sistema e suas permissões (RBAC)."
+                  features={[
+                    "Criar novos usuários",
+                    "Definir login e senhas",
+                    "Ativar/desativar contas",
+                    "Histórico de acessos",
+                    "Definir papéis (Gerente, Supervisor, etc.)",
+                    "Configurar permissões granulares"
+                  ]}
+                />
+              )}
+              {currentPage === 'backup' && (
+                <NotImplemented
+                  pageName="Backup e Restore"
+                  description="Faça backup e restaure dados do sistema."
+                  features={[
+                    "Backup completo do banco PGlite",
+                    "Seleção de dados específicos",
+                    "Validação de integridade",
+                    "Compressão automática",
+                    "Importar backups salvos",
+                    "Verificação de compatibilidade"
+                  ]}
+                />
+              )}
+              {currentPage === 'auditoria' && (
+                <NotImplemented
+                  pageName="Auditoria"
+                  description="Consulte o log completo de ações realizadas no sistema."
+                  features={[
+                    "Filtros por usuário",
+                    "Filtros por período",
+                    "Busca por tipo de ação",
+                    "Filtros por entidade afetada",
+                    "Login/logout de usuários",
+                    "Alterações em configurações"
+                  ]}
+                />
+              )}
             </AppLayout>
           ) : (
             <Login onLogin={handleLogin} />

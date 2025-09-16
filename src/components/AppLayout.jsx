@@ -12,24 +12,26 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
+import { SettingsPopover } from '@/components/settings-popover';
 
 const getPageTitle = (currentPage) => {
   const pageTitles = {
     'dashboard': 'Dashboard',
-    'registrar-dia': 'Registrar Dia Trabalhado',
-    'historico': 'Histórico de Trabalho',
-    'pendencias': 'Pendências',
+    'registrar-dia': 'Dia Trabalhado',
+    'historico': 'Histórico de Pagamentos',
     'cadastro-diarista': 'Cadastro de Diarista',
     'lista-diaristas': 'Lista de Diaristas',
     'funcoes': 'Funções e Cargos',
     'bonificacoes': 'Bonificações',
     'descontos': 'Descontos',
     'taxa-servico': 'Taxa de Serviço',
+    'diarias-a-pagar': 'Diárias a Pagar',
     'fechamentos': 'Fechamentos',
     'relatorios': 'Relatórios',
     'analytics': 'Analytics',
     'performance': 'Performance',
     'regras': 'Regras e Distribuição',
+    'jornada': 'Jornada',
     'usuarios': 'Usuários e Papéis',
     'backup': 'Backup e Restore',
     'auditoria': 'Auditoria'
@@ -65,7 +67,8 @@ const AppLayout = ({ children, user, onLogout, currentPage, onNavigate }) => {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="ml-auto px-4">
+          <div className="ml-auto px-4 flex items-center gap-2">
+            <SettingsPopover onNavigate={onNavigate} />
             <ModeToggle />
           </div>
         </header>

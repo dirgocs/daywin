@@ -322,9 +322,37 @@ ipcMain.handle('window:isMaximized', async (event) => {
 
 
 import { FuncaoRepository } from './repositories/FuncaoRepository';
+import { DiaristaRepository } from './repositories/DiaristaRepository';
 
 // Função IPC Handlers
 const funcaoRepo = new FuncaoRepository();
+const diaristaRepo = new DiaristaRepository();
+
+// Reports - Dias trabalhados por diarista (mês)
+ipcMain.handle('reports:diasTrabalhadosPorDiarista', async (event, params) => {
+  try {
+    const prisma = await databaseService.getClient();
+    const now = new Date();
+    const year = Number(params?.year) || now.getFullYear();
+    const monthZeroBased = (Number(params?.month) || now.getMonth() + 1) - 1; // 0-11
+    const start = new Date(year, monthZeroBased, 1);
+    const end = new Date(year, monthZeroBased + 1, 0);
+
+    const rows = await prisma.$queryRaw`
+      SELECT d.diarista_id, di.nome_completo as name, COUNT(*)::int as days
+      FROM dias_trabalhados d
+      JOIN diaristas di ON di.diarista_id = d.diarista_id
+      WHERE d.data >= ${start} AND d.data <= ${end}
+      GROUP BY d.diarista_id, di.nome_completo
+      ORDER BY days DESC
+    `;
+
+    return { success: true, data: rows };
+  } catch (error) {
+    console.error('Error reporting diasTrabalhadosPorDiarista:', error);
+    return { success: false, error: error.message };
+  }
+});
 
 ipcMain.handle('funcoes:findAllActive', async (event) => {
   try {
@@ -502,6 +530,93 @@ ipcMain.handle('funcoes:findMostUsed', async (event, limit = 10) => {
   }
 });
 
+// Diaristas IPC Handlers
+ipcMain.handle('diaristas:findAll', async (event, filters) => {
+  try {
+    const diaristas = await diaristaRepo.findAllActive();
+    return { success: true, data: diaristas };
+  } catch (error) {
+    console.error('Error finding diaristas:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('diaristas:findById', async (event, id) => {
+  try {
+    const diarista = await diaristaRepo.findById(Number(id));
+    return { success: true, data: diarista };
+  } catch (error) {
+    console.error('Error finding diarista by ID:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('diaristas:create', async (event, data) => {
+  try {
+    const diarista = await diaristaRepo.create(data);
+    if (currentUser) {
+      const prisma = await databaseService.getClient();
+      await prisma.auditoria.create({
+        data: {
+          usuario: currentUser.login,
+          acao: 'CREATE',
+          entidade: 'Diarista',
+          entidade_id: String(diarista.diarista_id),
+          detalhes: data,
+        }
+      });
+    }
+    return { success: true, data: diarista };
+  } catch (error) {
+    console.error('Error creating diarista:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('diaristas:update', async (event, id, data) => {
+  try {
+    const diarista = await diaristaRepo.update({ diarista_id: Number(id), ...data });
+    if (currentUser) {
+      const prisma = await databaseService.getClient();
+      await prisma.auditoria.create({
+        data: {
+          usuario: currentUser.login,
+          acao: 'UPDATE',
+          entidade: 'Diarista',
+          entidade_id: String(id),
+          detalhes: data,
+        }
+      });
+    }
+    return { success: true, data: diarista };
+  } catch (error) {
+    console.error('Error updating diarista:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('diaristas:delete', async (event, id) => {
+  try {
+    const diarista = await diaristaRepo.deactivate(Number(id));
+    if (currentUser) {
+      const prisma = await databaseService.getClient();
+      await prisma.auditoria.create({
+        data: {
+          usuario: currentUser.login,
+          acao: 'DEACTIVATE',
+          entidade: 'Diarista',
+          entidade_id: String(id),
+          detalhes: {},
+        }
+      });
+    }
+    return { success: true, data: diarista };
+  } catch (error) {
+    console.error('Error deleting diarista:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('funcoes:updateOrder', async (event, pairs) => {
   try {
     const result = await funcaoRepo.updateOrder(pairs || []);
@@ -520,6 +635,198 @@ ipcMain.handle('funcoes:updateOrder', async (event, pairs) => {
     return { success: true, data: result };
   } catch (error) {
     console.error('Error updating functions order:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Dias Trabalhados (mínimo necessário para criação)
+ipcMain.handle('dias:create', async (event, data) => {
+  try {
+    const prisma = await databaseService.getClient();
+    const created = await prisma.diaTrabalhado.create({
+      data: {
+        data: new Date(data.data),
+        diarista_id: Number(data.diarista_id),
+        funcao_id: data.funcao_id ? Number(data.funcao_id) : null,
+        horas_trabalhadas: Number(data.horas_trabalhadas ?? 0),
+        diaria_valor: Number(data.diaria_valor ?? 0),
+        observacoes: data.observacoes ?? null,
+      }
+    });
+
+    // Converter para objeto serializável
+    const serializedData = {
+      lanc_id: created.lanc_id.toString(),
+      data: created.data.toISOString(),
+      diarista_id: created.diarista_id,
+      funcao_id: created.funcao_id,
+      horas_trabalhadas: Number(created.horas_trabalhadas),
+      diaria_valor: Number(created.diaria_valor),
+      observacoes: created.observacoes
+    };
+
+    // Log de auditoria
+    if (currentUser) {
+      await prisma.auditoria.create({
+        data: {
+          usuario: currentUser.login,
+          acao: 'CREATE',
+          entidade: 'DiaTrabalhado',
+          entidade_id: created.lanc_id.toString(),
+          detalhes: {
+            diarista_id: created.diarista_id,
+            data: created.data.toISOString(),
+            valor: Number(created.diaria_valor)
+          }
+        }
+      });
+    }
+
+    return { success: true, data: serializedData };
+  } catch (error) {
+    console.error('Error creating dia trabalhado:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Settings
+ipcMain.handle('settings:get', async (event, key) => {
+  try {
+    const prisma = await databaseService.getClient();
+    const row = await prisma.settings.findUnique({ where: { key } });
+    return { success: true, data: row ? row.value : null };
+  } catch (error) {
+    console.error('Error getting setting:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('settings:set', async (event, key, value) => {
+  try {
+    const prisma = await databaseService.getClient();
+    const saved = await prisma.settings.upsert({
+      where: { key },
+      update: { value: String(value) },
+      create: { key, value: String(value) },
+    });
+    return { success: true, data: saved };
+  } catch (error) {
+    console.error('Error setting value:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Diárias a Pagar handlers
+ipcMain.handle('get-dias-trabalhados-pendentes', async (event) => {
+  try {
+    const prisma = await databaseService.getClient();
+    const dias = await prisma.diaTrabalhado.findMany({
+      where: {
+        // TODO: Adicionar campo 'pago' ao schema se necessário
+        // pago: false
+      },
+      include: {
+        diarista: true,
+        funcao: true
+      },
+      orderBy: {
+        data: 'desc'
+      }
+    });
+    return { success: true, data: dias };
+  } catch (error) {
+    console.error('Error fetching dias trabalhados pendentes:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-bonificacoes-pendentes', async (event) => {
+  try {
+    const prisma = await databaseService.getClient();
+    const bonificacoes = await prisma.bonificacao.findMany({
+      where: {
+        // TODO: Adicionar campo 'pago' ao schema se necessário
+        // pago: false
+      },
+      include: {
+        diarista: true
+      },
+      orderBy: {
+        data: 'desc'
+      }
+    });
+    return { success: true, data: bonificacoes };
+  } catch (error) {
+    console.error('Error fetching bonificacoes pendentes:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-descontos-pendentes', async (event) => {
+  try {
+    const prisma = await databaseService.getClient();
+    const descontos = await prisma.desconto.findMany({
+      where: {
+        // TODO: Adicionar campo 'pago' ao schema se necessário
+        // pago: false
+      },
+      include: {
+        diarista: true
+      },
+      orderBy: {
+        data: 'desc'
+      }
+    });
+    return { success: true, data: descontos };
+  } catch (error) {
+    console.error('Error fetching descontos pendentes:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-taxas-servico-pendentes', async (event) => {
+  try {
+    const prisma = await databaseService.getClient();
+    const taxas = await prisma.taxaServico.findMany({
+      where: {
+        // TODO: Adicionar campo 'distribuido' ao schema se necessário
+        // distribuido: false
+      },
+      orderBy: {
+        data: 'desc'
+      }
+    });
+    return { success: true, data: taxas };
+  } catch (error) {
+    console.error('Error fetching taxas servico pendentes:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('update-pagamento-diarista', async (event, { diaristaId, pago }) => {
+  try {
+    const prisma = await databaseService.getClient();
+
+    // TODO: Implementar lógica de marcação de pagamento
+    // Por enquanto, vamos simular o update
+    // Seria necessário adicionar campos 'pago' nas tabelas ou criar uma tabela de controle de pagamentos
+
+    // Log de auditoria
+    if (currentUser) {
+      await prisma.auditoria.create({
+        data: {
+          usuario: currentUser.login,
+          acao: pago ? 'MARCAR_PAGO' : 'DESMARCAR_PAGO',
+          entidade: 'PagamentoDiarista',
+          entidade_id: diaristaId.toString(),
+          detalhes: { diaristaId, pago, timestamp: new Date() }
+        }
+      });
+    }
+
+    return { success: true, data: { diaristaId, pago } };
+  } catch (error) {
+    console.error('Error updating pagamento diarista:', error);
     return { success: false, error: error.message };
   }
 });

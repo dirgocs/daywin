@@ -33,19 +33,24 @@ const getNavData = (onNavigate?: (page: string) => void) => ({
       isActive: true,
       items: [
         {
-          title: "Registrar Dia",
+          title: "Dia Trabalhado",
           url: "#",
           onClick: () => onNavigate?.('registrar-dia')
         },
         {
-          title: "Histórico",
+          title: "Bonificações",
           url: "#",
-          onClick: () => onNavigate?.('historico')
+          onClick: () => onNavigate?.('bonificacoes')
         },
         {
-          title: "Pendências",
+          title: "Descontos",
           url: "#",
-          onClick: () => onNavigate?.('pendencias')
+          onClick: () => onNavigate?.('descontos')
+        },
+        {
+          title: "Taxa de Serviço",
+          url: "#",
+          onClick: () => onNavigate?.('taxa-servico')
         },
       ],
     },
@@ -64,11 +69,6 @@ const getNavData = (onNavigate?: (page: string) => void) => ({
           url: "#",
           onClick: () => onNavigate?.('lista-diaristas')
         },
-        {
-          title: "Funções",
-          url: "#",
-          onClick: () => onNavigate?.('funcoes')
-        },
       ],
     },
     {
@@ -77,24 +77,14 @@ const getNavData = (onNavigate?: (page: string) => void) => ({
       icon: DollarSign,
       items: [
         {
-          title: "Bonificações",
+          title: "Diárias a Pagar",
           url: "#",
-          onClick: () => onNavigate?.('bonificacoes')
+          onClick: () => onNavigate?.('diarias-a-pagar')
         },
         {
-          title: "Descontos",
+          title: "Histórico de Pagamentos",
           url: "#",
-          onClick: () => onNavigate?.('descontos')
-        },
-        {
-          title: "Taxa de Serviço",
-          url: "#",
-          onClick: () => onNavigate?.('taxa-servico')
-        },
-        {
-          title: "Fechamentos",
-          url: "#",
-          onClick: () => onNavigate?.('fechamentos')
+          onClick: () => onNavigate?.('historico')
         },
       ],
     },
@@ -117,33 +107,6 @@ const getNavData = (onNavigate?: (page: string) => void) => ({
           title: "Performance",
           url: "#",
           onClick: () => onNavigate?.('performance')
-        },
-      ],
-    },
-    {
-      title: "Configurações",
-      url: "#",
-      icon: Settings,
-      items: [
-        {
-          title: "Regras & Distribuição",
-          url: "#",
-          onClick: () => onNavigate?.('regras')
-        },
-        {
-          title: "Usuários & Papéis",
-          url: "#",
-          onClick: () => onNavigate?.('usuarios')
-        },
-        {
-          title: "Backup & Restore",
-          url: "#",
-          onClick: () => onNavigate?.('backup')
-        },
-        {
-          title: "Auditoria",
-          url: "#",
-          onClick: () => onNavigate?.('auditoria')
         },
       ],
     },

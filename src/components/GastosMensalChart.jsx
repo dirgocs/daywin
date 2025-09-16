@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp } from "lucide-react"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, Cell } from 'recharts';
 
 import {
   Card,
@@ -18,6 +18,7 @@ import {
 export function GastosMensalChart() {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   // Função dinâmica para calcular gastos dos últimos 6 meses
   const calculateLastSixMonthsData = async () => {
@@ -166,19 +167,17 @@ export function GastosMensalChart() {
               />
               <Bar 
                 dataKey="value" 
-                fill="var(--color-value)" 
-                radius={[0, 0, 0, 0]}
-                style={{
-                  transition: 'fill 0.2s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(data, index, e) => {
-                  e.target.style.fill = 'var(--accent)';
-                }}
-                onMouseLeave={(data, index, e) => {
-                  e.target.style.fill = 'var(--color-value)';
-                }}
+                radius={[8, 8, 0, 0]}
+                style={{ transition: 'filter 0.2s ease' }}
               >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={hoveredIndex === index ? 'var(--primary)' : 'var(--accent)'}
+                    onMouseEnter={() => setHoveredIndex(index)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                  />
+                ))}
                 <LabelList 
                   dataKey="value"
                   position="top"

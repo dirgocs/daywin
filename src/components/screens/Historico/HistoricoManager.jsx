@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, User, Briefcase, DollarSign, Filter, Download, Search, CalendarDays } from 'lucide-react';
+import { ChartBarInteractive } from '@/components/ui/ChartBarInteractive';
 import HistoricoFilters from './HistoricoFilters';
 import HistoricoTable from './HistoricoTable';
 import HistoricoStats from './HistoricoStats';
@@ -65,6 +66,43 @@ const HistoricoManager = () => {
   ]);
 
   const [dadosFiltrados, setDadosFiltrados] = useState(historicoData);
+
+  // Preparar dados do gráfico baseados no histórico
+  const prepararDadosGrafico = (dados) => {
+    // Agrupar dados por data e calcular valores por setor
+    const dadosPorData = dados.reduce((acc, item) => {
+      const data = item.data;
+
+      if (!acc[data]) {
+        acc[data] = {
+          date: data,
+          total: 0,
+          atendimento: 0,
+          producao: 0
+        };
+      }
+
+      // Verificar se é cozinha/produção ou atendimento
+      const isProducao = item.funcoes.some(f =>
+        f.nome.toLowerCase().includes('cozinha') ||
+        f.nome.toLowerCase().includes('produção')
+      );
+
+      const valor = item.valorRecebido || 0;
+      acc[data].total += valor;
+
+      if (isProducao) {
+        acc[data].producao += valor;
+      } else {
+        acc[data].atendimento += valor;
+      }
+
+      return acc;
+    }, {});
+
+    // Converter para array e ordenar por data
+    return Object.values(dadosPorData).sort((a, b) => new Date(a.date) - new Date(b.date));
+  };
 
   const aplicarFiltros = (novosFiltros) => {
     setFiltros(novosFiltros);
@@ -135,11 +173,14 @@ const HistoricoManager = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Histórico</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Histórico de Pagamentos</h1>
         <p className="text-muted-foreground">
-          Consulte o histórico completo de dias trabalhados com filtros avançados.
+          Consulte o histórico completo de pagamentos com análise visual e filtros avançados.
         </p>
       </div>
+
+      {/* Gráfico de valores pagos */}
+      <ChartBarInteractive data={prepararDadosGrafico(dadosFiltrados)} />
 
       {/* Filtros */}
       <Card>

@@ -182,7 +182,7 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [] }) => {
         {/* Input com chips dentro + ícone de configurações */}
         <div className="relative">
             <div
-              className="min-h-10 w-full rounded-md border bg-background px-2 py-1 pr-10 text-sm flex flex-wrap items-center gap-1 focus-within:ring-2 focus-within:ring-ring focus-within:outline-none"
+              className="h-9 w-full rounded-md border border-input bg-background px-2 py-0 pr-10 text-sm flex flex-wrap items-center gap-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring"
               onClick={() => inputRef.current?.focus()}
             >
               {funcoesData.map((funcao) => {
@@ -195,12 +195,12 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [] }) => {
                     {isTruncated ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className={`truncate max-w-[10rem] px-2 py-0.5 rounded-md ${colorClass}`}>{displayName}</span>
+                          <span className={`truncate max-w-[10rem] px-2 py-0 rounded-md ${colorClass}`}>{displayName}</span>
                         </TooltipTrigger>
                         <TooltipContent side="top" align="start">{fullName}</TooltipContent>
                       </Tooltip>
                     ) : (
-                      <span className={`truncate max-w-[10rem] px-2 py-0.5 rounded-md ${colorClass}`}>{displayName}</span>
+                      <span className={`truncate max-w-[10rem] px-2 py-0 rounded-md ${colorClass}`}>{displayName}</span>
                     )}
                     <button
                       type="button"
@@ -221,7 +221,7 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [] }) => {
                 onBlur={handleInputBlur}
                 onKeyPress={handleKeyPress}
                 placeholder={funcoesData.length === 0 ? "Digite para buscar funções..." : "Adicionar função"}
-                className="flex-1 min-w-[8rem] bg-transparent outline-none border-0 h-8"
+                className="flex-1 min-w-[8rem] bg-transparent outline-none border-0 h-7"
                 lang="pt-BR"
               />
             </div>
@@ -230,9 +230,9 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [] }) => {
                 <button
                   type="button"
                   aria-label="Gerenciar funções"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1 h-7 w-7 flex items-center justify-center text-muted-foreground opacity-60 hover:opacity-100 hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1 h-6 w-6 flex items-center justify-center text-muted-foreground opacity-60 hover:opacity-100 hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring"
                 >
-                  <Tag className="h-4 w-4" />
+                  <Tag className="h-3.5 w-3.5" />
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-2 text-xs">
@@ -357,12 +357,9 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [] }) => {
                 </div>
               </PopoverContent>
             </Popover>
-          </div>
-          
-          {/* Sugestões de autocomplete (mesma estética do popover de TAG) */}
-          {showSuggestions && filteredSuggestions.length > 0 && (
-            <div className="absolute left-[2px] z-50 mt-[2px] rounded-md border bg-popover p-2 text-popover-foreground text-xs shadow-md w-auto min-w-[16rem] max-w-[22rem]">
-              <div className="max-h-40 overflow-y-auto">
+            {/* Sugestões dentro do container relativo, alinhadas ao field */}
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <div className="absolute left-0 top-full mt-[2px] z-50 rounded-md border bg-popover p-2 text-popover-foreground text-xs w-auto min-w-[16rem] max-w-[22rem]">
                 {filteredSuggestions.map((funcao) => {
                   const fullName = funcao.funcao_nome || '';
                   const isTruncated = fullName.length > 30;
@@ -389,8 +386,11 @@ const FuncaoSelector = ({ selectedFuncoes = [], onChange, funcoes = [] }) => {
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          
+          {/* dropdown de sugestões foi movido para dentro do container relativo acima */}
+          {false && showSuggestions && filteredSuggestions.length > 0 && <div />}
 
         {/* Chips agora ficam dentro do campo acima */}
       </div>

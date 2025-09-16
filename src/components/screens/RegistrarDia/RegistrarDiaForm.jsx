@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { format, parse, isValid as isValidDate } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Save, RotateCcw, CheckCircle, Calendar as CalendarIcon, DollarSign, Clock, Calculator } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import DiaristaSelector from './DiaristaSelector';
 import FuncaoSelector from './FuncaoSelector';
 import DataObservacaoInput from './DataObservacaoInput';
@@ -13,7 +15,7 @@ import { useFuncoes } from '@/hooks/useFuncoes';
 
 const RegistrarDiaForm = () => {
   const [formData, setFormData] = useState({
-    diaristaId: '',
+    diaristasIds: [],
     funcoesSelecionadas: [],
     // Sem cálculo de múltiplas funções: apenas uma função selecionada
     data: new Date().toISOString().split('T')[0],
@@ -25,6 +27,50 @@ const RegistrarDiaForm = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [valorEdited, setValorEdited] = useState(false);
+  const [jornadaCompleta, setJornadaCompleta] = useState(true);
+  const [jornadaHoras, setJornadaHoras] = useState(8);
+  const dateInputRef = useRef(null);
+  const hiddenDateInputRef = useRef(null);
+
+  const isoToDisplay = (iso) => {
+    try {
+      if (!iso) return '';
+      const d = parse(iso, 'yyyy-MM-dd', new Date());
+      return isValidDate(d) ? format(d, 'dd/MM/yyyy') : '';
+    } catch { return ''; }
+  };
+  const displayToIso = (txt) => {
+    try {
+      const d = parse(txt, 'dd/MM/yyyy', new Date());
+      return isValidDate(d) ? format(d, 'yyyy-MM-dd') : null;
+    } catch { return null; }
+  };
+  const [dateDisplay, setDateDisplay] = useState(isoToDisplay(new Date().toISOString().split('T')[0]));
+
+  // Carregar jornada padrão das configurações
+  useEffect(() => {
+    async function loadJornada() {
+      try {
+        if (typeof window === 'undefined' || !window.electronAPI?.settings) return;
+        const res = await window.electronAPI.settings.get('jornada');
+        if (res?.success && res.data) {
+          const cfg = JSON.parse(res.data);
+          const toMin = (hhmm) => {
+            const m = String(hhmm||'').match(/^(\d{2}):(\d{2})$/); if (!m) return null; return Number(m[1])*60+Number(m[2]);
+          };
+          const s = toMin(cfg.start); const e = toMin(cfg.end);
+          if (s!=null && e!=null && e>s) {
+            let minutes = e - s;
+            const intervals = Array.isArray(cfg.intervals) ? cfg.intervals : [];
+            const sumInt = intervals.reduce((acc,it)=> acc + Math.max(0, Number(it?.duration||0)), 0);
+            minutes = Math.max(0, minutes - sumInt);
+            setJornadaHoras(Math.max(0, minutes/60));
+          }
+        }
+      } catch(e) { /* ignore, manter 8h */ }
+    }
+    loadJornada();
+  }, []);
 
   // Carregar funções do DB e mapear selecionadas
   const { funcoes: availableFuncoes } = useFuncoes();
@@ -40,17 +86,25 @@ const RegistrarDiaForm = () => {
     setLoading(true);
 
     try {
-      // Mock API call - em produção seria uma chamada real
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Calcular pontos baseado na função única selecionada
-      const multiplicador = funcoesData[0]?.pontos || 0;
-
-      console.log('Dados do formulário:', {
-        ...formData,
-        funcoesSelecionadasData: funcoesData,
-        pontosCalculados: formData.horas ? parseFloat(formData.horas) * multiplicador : 0
-      });
+      // Persistir um registro para cada diarista selecionado
+      if (typeof window === 'undefined' || !window.electronAPI?.dias) {
+        throw new Error('IPC dias indisponível');
+      }
+      const funcaoId = formData.funcoesSelecionadas[0] ? Number(formData.funcoesSelecionadas[0]) : null;
+      const horas = jornadaCompleta
+        ? jornadaHoras
+        : (parseFloat(String(formData.horas).replace(',', '.')) || 0);
+      const valor = parseFloat(String(formData.valorDiaria).replace(',', '.')) || 0;
+      for (const did of formData.diaristasIds) {
+        await window.electronAPI.dias.create({
+          data: formData.data,
+          diarista_id: Number(did),
+          funcao_id: funcaoId,
+          horas_trabalhadas: horas,
+          diaria_valor: valor,
+          observacoes: formData.observacoes || null,
+        });
+      }
 
       setSuccess(true);
       setTimeout(() => {
@@ -67,7 +121,7 @@ const RegistrarDiaForm = () => {
 
   const handleReset = () => {
     setFormData({
-      diaristaId: '',
+      diaristasIds: [],
       funcoesSelecionadas: [],
       data: new Date().toISOString().split('T')[0],
       horas: '',
@@ -77,8 +131,16 @@ const RegistrarDiaForm = () => {
     setValorEdited(false);
   };
 
-  const isFormValid = formData.diaristaId && formData.funcoesSelecionadas.length > 0 && 
-                     formData.data && formData.horas && formData.valorDiaria;
+  const hasDiaristas = Array.isArray(formData.diaristasIds) && formData.diaristasIds.length > 0;
+  const hasFuncao = Array.isArray(formData.funcoesSelecionadas) && formData.funcoesSelecionadas.length > 0;
+  const hasDate = (() => {
+    if (formData.data) return true;
+    const v = String(dateDisplay || '');
+    return /^\d{2}\/\d{2}\/\d{4}$/.test(v);
+  })();
+  const hasHoras = jornadaCompleta || String(formData.horas ?? '').trim() !== '';
+  const hasValor = String(formData.valorDiaria ?? '').trim() !== '';
+  const isFormValid = hasDiaristas && hasFuncao && hasDate && hasHoras && hasValor;
 
   // Handlers para campos separados
   const handleHorasChange = (e) => {
@@ -142,38 +204,97 @@ const RegistrarDiaForm = () => {
           {/* 1a linha: Diarista, Dia Trabalhado, Valor da diária */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <DiaristaSelector
-              value={formData.diaristaId}
-              onChange={(value) => setFormData(prev => ({ ...prev, diaristaId: value }))}
+              values={formData.diaristasIds}
+              onChange={(values) => setFormData(prev => ({ ...prev, diaristasIds: values }))}
             />
             <div className="space-y-2">
               <Label htmlFor="data" className="flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4" />
                 Dia Trabalhado
               </Label>
-              <Input
-                id="data"
-                type="date"
-                value={formData.data}
-                onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
-                max={new Date().toISOString().split('T')[0]}
-              />
+              <div className="relative">
+                {/* Visible, formatted input */}
+                <Input
+                  id="data"
+                  type="text"
+                  ref={dateInputRef}
+                  value={dateDisplay}
+                  placeholder="DD/MM/AAAA"
+                  inputMode="numeric"
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/[^0-9/]/g, '');
+                    setDateDisplay(v);
+                  }}
+                  onBlur={() => {
+                    const iso = displayToIso(dateDisplay);
+                    if (iso) {
+                      setFormData(prev => ({ ...prev, data: iso }));
+                      setDateDisplay(isoToDisplay(iso));
+                    } else {
+                      // revert to last valid
+                      setDateDisplay(isoToDisplay(formData.data));
+                    }
+                  }}
+                  className="pr-10"
+                />
+                {/* Hidden native date input for picker */}
+                <input
+                  type="date"
+                  ref={hiddenDateInputRef}
+                  value={formData.data}
+                  onChange={(e) => {
+                    const iso = e.target.value;
+                    setFormData(prev => ({ ...prev, data: iso }));
+                    setDateDisplay(isoToDisplay(iso));
+                  }}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden={true}
+                />
+                <button
+                  type="button"
+                  aria-label="Abrir calendário"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1 h-6 w-6 flex items-center justify-center text-muted-foreground opacity-60 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring"
+                  onClick={() => {
+                    const el = hiddenDateInputRef.current;
+                    if (!el) return;
+                    if (typeof el.showPicker === 'function') {
+                      try { el.showPicker(); return; } catch {}
+                    }
+                    el.focus();
+                    el.click();
+                  }}
+                >
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="horas" className="flex items-center gap-2">
+              <Label className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                Horas Trabalhadas
+                Jornada Completa
               </Label>
-              <Input
-                id="horas"
-                type="number"
-                step="0.5"
-                min="0"
-                max="24"
-                placeholder="8.0"
-                value={formData.horas}
-                onChange={handleHorasChange}
-                className="text-right"
-              />
+              <div className="flex items-center gap-3">
+                <Switch checked={jornadaCompleta} onCheckedChange={setJornadaCompleta} />
+                <span className="text-sm text-muted-foreground">{jornadaCompleta ? 'Usar jornada padrão' : 'Informar horas manualmente'}</span>
+              </div>
+              {!jornadaCompleta && (
+                <div className="pt-2">
+                  <Label htmlFor="horas" className="sr-only">Horas Trabalhadas</Label>
+                  <Input
+                    id="horas"
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    max="24"
+                    placeholder="8.0"
+                    value={formData.horas}
+                    onChange={handleHorasChange}
+                    className="text-right"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -250,21 +371,21 @@ const RegistrarDiaForm = () => {
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="outline">
-                    Funções: {funcoesData.map(f => f.nome).join(', ')}
+                    Funções: {funcoesData.map(f => f.funcao_nome).join(', ')}
                   </Badge>
                   <Badge variant="outline">
                     Valor: R$ {formData.valorDiaria}
                   </Badge>
-                  <Badge variant="outline">
-                    Horas: {formData.horas}h
-                  </Badge>
+                  <Badge variant="outline">Horas: {jornadaCompleta ? `${jornadaHoras}h` : `${formData.horas || 0}h`}</Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">
                     Pontos: {(() => {
                       if (funcoesData.length === 0) return '0';
                       const multiplicador = funcoesData[0]?.pontos || 0;
-                      return (parseFloat(formData.horas || 0) * multiplicador).toFixed(1);
+                      const jornadaPadraoHoras = 8; // TODO: ler das configurações
+                      const h = jornadaCompleta ? jornadaHoras : parseFloat(formData.horas || 0);
+                      return (h * multiplicador).toFixed(1);
                     })()}
                   </Badge>
                 </div>
@@ -272,10 +393,10 @@ const RegistrarDiaForm = () => {
             </div>
           )}
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col gap-2 pt-4">
             <Button 
               type="submit" 
-              className="flex-1"
+              className="w-full"
               disabled={!isFormValid || loading}
             >
               {loading ? (
@@ -290,16 +411,19 @@ const RegistrarDiaForm = () => {
                 </>
               )}
             </Button>
-            
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={handleReset}
-              disabled={loading}
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Limpar
-            </Button>
+            {/* Removido feedback textual de campos faltantes */}
+            <div className="flex gap-4">
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={handleReset}
+                disabled={loading}
+                className="flex-1"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Limpar
+              </Button>
+            </div>
           </div>
         </form>
       </CardContent>

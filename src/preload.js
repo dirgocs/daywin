@@ -102,7 +102,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   reports: {
     diaristas: (filters) => ipcRenderer.invoke('reports:diaristas', filters),
     financeiro: (filters) => ipcRenderer.invoke('reports:financeiro', filters),
-    periodo: (periodoId) => ipcRenderer.invoke('reports:periodo', periodoId)
+    periodo: (periodoId) => ipcRenderer.invoke('reports:periodo', periodoId),
+    diasTrabalhadosPorDiarista: (params) => ipcRenderer.invoke('reports:diasTrabalhadosPorDiarista', params)
   },
 
   // Exports APIs
@@ -118,6 +119,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     update: (id, data) => ipcRenderer.invoke('users:update', id, data),
     delete: (id) => ipcRenderer.invoke('users:delete', id),
     changePassword: (id, passwords) => ipcRenderer.invoke('users:changePassword', id, passwords)
+  },
+
+  // Settings APIs
+  settings: {
+    get: (key) => ipcRenderer.invoke('settings:get', key),
+    set: (key, value) => ipcRenderer.invoke('settings:set', key, value),
   },
 
   // Roles APIs

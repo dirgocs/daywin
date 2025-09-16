@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ArrowLeft, User, Mail, Phone, MapPin, X } from 'lucide-react';
 
-const CadastroDiarista = ({ onBack }) => {
+const CadastroDiarista = ({ onBack, onCreated }) => {
   const [formData, setFormData] = useState({
     nome: '',
     cpf: '',
@@ -86,12 +86,26 @@ const CadastroDiarista = ({ onBack }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Dados do diarista:', formData);
-    // Aqui será implementada a conexão com o banco de dados
-    alert('Diarista cadastrado com sucesso!');
-    onBack();
+    try {
+      const payload = {
+        nome_completo: formData.nome?.trim() || '',
+        telefone: formData.telefone?.trim() || null,
+        email: formData.email?.trim() || null,
+        ativo: true,
+      };
+      let created = null;
+      if (typeof window !== 'undefined' && window.electronAPI?.diaristas) {
+        const result = await window.electronAPI.diaristas.create(payload);
+        if (result?.success) created = result.data;
+      }
+      if (onCreated && created) onCreated(created);
+    } catch (err) {
+      console.error('Erro ao cadastrar diarista:', err);
+    } finally {
+      onBack && onBack();
+    }
   };
 
   return (

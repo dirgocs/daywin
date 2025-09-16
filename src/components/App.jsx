@@ -7,18 +7,21 @@ import { WeekCalendarPicker } from './WeekCalendarPicker';
 import CadastroDiarista from './CadastroDiarista';
 import RegistrarDia from './screens/RegistrarDia';
 import Historico from './screens/Historico';
-import Pendencias from './screens/Pendencias';
 import ListaDiaristas from './screens/ListaDiaristas';
 import Funcoes from './screens/Funcoes';
 import Bonificacoes from './screens/Bonificacoes';
 import Descontos from './screens/Descontos';
 import TaxaServico from './screens/TaxaServico';
+import DiariasAPagar from './screens/DiariasAPagar';
 import { Fechamentos, Relatorios, Analytics, Performance, Regras, Usuarios, Backup, Auditoria } from './screens/index';
+import Jornada from './screens/Jornada';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Calendar, DollarSign, AlertTriangle, TrendingUp, BarChart3, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { GastosMensalChart } from './GastosMensalChart';
+import { DiaristasSemanaChart } from './DiaristasSemanaChart';
+import { DiasTrabalhadosChart } from './DiasTrabalhadosChart';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -324,119 +327,12 @@ const App = () => {
                 <div className="grid gap-4 md:grid-cols-2 mt-6">
                   <GastosMensalChart />
                   
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-end justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            <BarChart3 className="h-5 w-5" />
-                            Diaristas por Dia da Semana
-                          </CardTitle>
-                          <CardDescription>
-                            {getWeekRangeText(currentWeekOffset)}
-                          </CardDescription>
-                        </div>
-                        <div className="flex items-center -space-x-1 -mr-2">
-                          <div className="scale-75">
-                            <WeekCalendarPicker 
-                              currentWeekOffset={currentWeekOffset}
-                              onWeekSelect={setCurrentWeekOffset}
-                            />
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 w-8 p-0 scale-75"
-                            onClick={() => navigateWeek(-1)}
-                            disabled={currentWeekOffset <= -52}
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 w-8 p-0 scale-75"
-                            onClick={() => navigateWeek(1)}
-                            disabled={currentWeekOffset >= 0}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-64 flex items-end gap-2 p-4">
-                        {getWeekData(currentWeekOffset).map((item, index) => (
-                          <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                            <div 
-                              className="w-full bg-blue-500 rounded-t-md transition-all hover:bg-blue-600 group relative"
-                              style={{ height: `${(item.cleaners / 16) * 100}%` }}
-                            >
-                              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                {item.cleaners} diaristas
-                              </div>
-                            </div>
-                            <div className="text-center">
-                              <span className="text-xs text-muted-foreground font-medium block">
-                                {item.day}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {item.date}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <DiaristasSemanaChart />
                 </div>
                 
                 {/* Third Chart - Days Worked per Cleaner */}
                 <div className="mt-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5" />
-                        Dias Trabalhados por Diarista - Dezembro 2024
-                      </CardTitle>
-                      <CardDescription>
-                        Total de dias trabalhados por cada diarista neste mês
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {[
-                          { name: 'Maria Silva', days: 22, color: 'bg-emerald-500', percentage: 88 },
-                          { name: 'Ana Costa', days: 18, color: 'bg-blue-500', percentage: 72 },
-                          { name: 'João Santos', days: 15, color: 'bg-purple-500', percentage: 60 },
-                          { name: 'Paula Oliveira', days: 25, color: 'bg-pink-500', percentage: 100 },
-                          { name: 'Carlos Ferreira', days: 12, color: 'bg-orange-500', percentage: 48 },
-                          { name: 'Lucia Pereira', days: 20, color: 'bg-teal-500', percentage: 80 }
-                        ].map((cleaner, index) => (
-                          <div key={index} className="flex items-center gap-4">
-                            <div className="w-32 flex-shrink-0">
-                              <span className="text-sm font-medium">{cleaner.name}</span>
-                            </div>
-                            <div className="flex-1 relative">
-                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-6">
-                                <div 
-                                  className={`h-6 rounded-full ${cleaner.color} transition-all duration-500 flex items-center justify-end pr-2`}
-                                  style={{ width: `${cleaner.percentage}%` }}
-                                >
-                                  <span className="text-xs font-medium text-white">
-                                    {cleaner.days} dias
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="w-16 flex-shrink-0 text-right">
-                              <span className="text-sm text-muted-foreground">{cleaner.percentage}%</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <DiasTrabalhadosChart />
                 </div>
                 </div>
               )}
@@ -447,17 +343,18 @@ const App = () => {
               
               {currentPage === 'registrar-dia' && <RegistrarDia />}
               {currentPage === 'historico' && <Historico />}
-              {currentPage === 'pendencias' && <Pendencias />}
               {currentPage === 'lista-diaristas' && <ListaDiaristas />}
               {currentPage === 'funcoes' && <Funcoes />}
               {currentPage === 'bonificacoes' && <Bonificacoes />}
               {currentPage === 'descontos' && <Descontos />}
               {currentPage === 'taxa-servico' && <TaxaServico />}
+              {currentPage === 'diarias-a-pagar' && <DiariasAPagar />}
               {currentPage === 'fechamentos' && <Fechamentos />}
               {currentPage === 'relatorios' && <Relatorios />}
               {currentPage === 'analytics' && <Analytics />}
               {currentPage === 'performance' && <Performance />}
               {currentPage === 'regras' && <Regras />}
+              {currentPage === 'jornada' && <Jornada />}
               {currentPage === 'usuarios' && <Usuarios />}
               {currentPage === 'backup' && <Backup />}
               {currentPage === 'auditoria' && <Auditoria />}
